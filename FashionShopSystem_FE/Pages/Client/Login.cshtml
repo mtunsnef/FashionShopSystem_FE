@@ -1,0 +1,250 @@
+@page "/dang-nhap"
+@model FashionShopSystem_FE.Pages.Client.LoginModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout = "~/Pages/Shared/Client/_LayoutClient.cshtml";
+}
+
+<!-- Breadcrumb Section Begin -->
+<section class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__text">
+                    <h4>Đăng nhập</h4>
+                    <div class="breadcrumb__links">
+                        <a href="/trang-chu">Trang chủ</a>
+                        <span>Đăng nhập</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Breadcrumb Section End -->
+
+<!-- Login Section Begin -->
+<section class="login spad">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 offset-lg-3">
+                <div class="login__form">
+                    <h3>Đăng nhập</h3>
+                    
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["ErrorMessage"]
+                        </div>
+                    }
+                    
+                    <form method="post" asp-page-handler="EmailLogin">
+                        <div class="input__item">
+                            <input type="email" placeholder="Địa chỉ email" asp-for="Input.Email" required>
+                            <span class="icon_mail"></span>
+                            <span asp-validation-for="Input.Email" class="text-danger"></span>
+                        </div>
+                        <div class="input__item">
+                            <input type="password" placeholder="Mật khẩu" asp-for="Input.Password" required>
+                            <span class="icon_lock"></span>
+                            <span asp-validation-for="Input.Password" class="text-danger"></span>
+                        </div>
+                        <button type="submit" class="site-btn">Đăng nhập</button>
+                    </form>
+                    
+                    <div class="login__social">
+                        <div class="row d-flex justify-content-center">
+                            <div class="col-md-8">
+                                <div class="text-center mb-3">
+                                    <span>Hoặc đăng nhập với</span>
+                                </div>
+                                <a href="javascript:void(0);" onclick="loginWithGoogle()" class="google-login-btn">
+                                    <i class="fab fa-google"></i>
+                                    Đăng nhập với Google
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="login__register">
+                        Chưa có tài khoản? <a href="/dang-ky">Đăng ký ngay</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Login Section End -->
+
+<script>
+function loginWithGoogle() {
+    // Replace with your actual backend API base URL
+    const backendUrl = 'https://localhost:7242'; 
+    
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=655520910548-isvlvafalk0sd500mhkqfosg57dvlt6h.apps.googleusercontent.com&` +
+        `redirect_uri=${encodeURIComponent(backendUrl + '/api/Authenticate/google/callback')}&` +
+        `response_type=code&` +
+        `scope=openid email profile&` +
+        `access_type=offline`;
+    
+    window.location.href = googleAuthUrl;
+}
+
+// Handle successful login
+@if (ViewData["LoginSuccess"] != null && (bool)ViewData["LoginSuccess"])
+{
+    <text>
+    // Save token to localStorage
+    @if (ViewData["token"] != null)
+    {
+        <text>localStorage.setItem('token', '@ViewData["token"]');</text>
+    }
+    
+    // Save user info to localStorage
+    @if (ViewData["UserInfo"] != null)
+    {
+        <text>localStorage.setItem('userInfo', '@Html.Raw(ViewData["UserInfo"])');</text>
+    }
+    
+    // Redirect to home page
+    window.location.href = '/trang-chu';
+    </text>
+}
+</script>
+
+<style>
+.login {
+    padding: 80px 0;
+}
+
+.login__form {
+    background: #fff;
+    padding: 50px 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+}
+
+.login__form h3 {
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 35px;
+    text-align: center;
+}
+
+.input__item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input__item input {
+    width: 100%;
+    height: 50px;
+    border: 1px solid #e1e1e1;
+    font-size: 16px;
+    color: #666;
+    padding-left: 45px;
+    border-radius: 5px;
+}
+
+.input__item input:focus {
+    border-color: #ca1515;
+    outline: none;
+}
+
+.input__item span {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 18px;
+}
+
+.site-btn {
+    display: block;
+    width: 100%;
+    height: 50px;
+    background: #ca1515;
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.3s;
+}
+
+.site-btn:hover {
+    background: #a91212;
+}
+
+.login__social {
+    margin: 30px 0;
+    text-align: center;
+}
+
+.google-login-btn {
+    display: inline-block;
+    width: 100%;
+    padding: 12px 20px;
+    background: #db4437;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.google-login-btn:hover {
+    background: #c23321;
+    color: #fff;
+    text-decoration: none;
+}
+
+.google-login-btn i {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+.login__register {
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+}
+
+.login__register a {
+    color: #ca1515;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login__register a:hover {
+    text-decoration: underline;
+}
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.text-danger {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+</style> 
