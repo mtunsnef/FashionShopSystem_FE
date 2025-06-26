@@ -13,8 +13,8 @@
                             <a href="/dang-nhap" id="loginLink">Đăng nhập</a>
                             <a href="/dang-ky" id="registerLink">Đăng ký</a>
                             <div id="userMenu" style="display: none;">
-                                <span id="userName">Loading...</span>
-                                <a href="javascript:void(0);" onclick="logout()">Đăng xuất</a>
+                                <span id="userName" style="color: #ca1515; font-weight: bold; margin-right: 16px;">Loading...</span>
+                                <a href="javascript:void(0);" onclick="logout()" style="margin-left: 4px;">Đăng xuất</a>
                             </div>
                         </div>
                     </div>
@@ -85,8 +85,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 document.getElementById('userMenu').style.display = 'inline-block';
                 
                 // Display user name
-                const userName = userData.name || userData.email || 'User';
-                document.getElementById('userName').textContent = `Xin chào, ${userName}`;
+                // Prefer FullName from API, fallback to name/email/User
+                const userName = userData.FullName || userData.fullName || userData.name || userData.email || 'User';
+                const userNameSpan = document.getElementById('userName');
+                userNameSpan.textContent = `Xin chào, ${userName}`;
+                userNameSpan.style.color = '#ca1515';
+                userNameSpan.style.fontWeight = 'bold';
                 
             } else {
                 // Token is invalid, remove it

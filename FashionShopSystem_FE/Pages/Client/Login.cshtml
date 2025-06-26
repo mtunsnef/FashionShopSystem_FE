@@ -80,18 +80,16 @@
 function loginWithGoogle() {
     // Replace with your actual backend API base URL
     const backendUrl = 'https://localhost:7242'; 
-    
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=655520910548-isvlvafalk0sd500mhkqfosg57dvlt6h.apps.googleusercontent.com&` +
         `redirect_uri=${encodeURIComponent(backendUrl + '/api/Authenticate/google/callback')}&` +
         `response_type=code&` +
         `scope=openid email profile&` +
         `access_type=offline`;
-    
     window.location.href = googleAuthUrl;
 }
 
-// Handle successful login
+// Handle successful login for normal login
 @if (ViewData["LoginSuccess"] != null && (bool)ViewData["LoginSuccess"])
 {
     <text>
@@ -100,17 +98,51 @@ function loginWithGoogle() {
     {
         <text>localStorage.setItem('token', '@ViewData["token"]');</text>
     }
-    
     // Save user info to localStorage
     @if (ViewData["UserInfo"] != null)
     {
         <text>localStorage.setItem('userInfo', '@Html.Raw(ViewData["UserInfo"])');</text>
     }
-    
     // Redirect to home page
     window.location.href = '/trang-chu';
     </text>
 }
+
+// Handle Google login redirect
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    if (token) {
+        localStorage.setItem('token', token);
+        // Fetch user info and store in localStorage, then redirect
+        fetch('https://localhost:7242/api/user/me', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                // If token is invalid, remove it and redirect to login
+                localStorage.removeItem('token');
+                localStorage.removeItem('userInfo');
+                window.location.href = '/dang-nhap';
+                throw new Error('Invalid token');
+            }
+        })
+        .then(userInfo => {
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+            window.location.href = '/trang-chu';
+        })
+        .catch(() => {
+            // fallback in case of error
+            window.location.href = '/trang-chu';
+        });
+    }
+});
 </script>
 
 <style>
