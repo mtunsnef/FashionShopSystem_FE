@@ -67,6 +67,7 @@
                     </div>
                     
                     <div class="login__register">
+                        <a href="/quen-mat-khau">Quên mật khẩu?</a><br />
                         Chưa có tài khoản? <a href="/dang-ky">Đăng ký ngay</a>
                     </div>
                 </div>
@@ -133,8 +134,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Invalid token');
             }
         })
-        .then(userInfo => {
-            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+        .then(() => {
+            // Do NOT store userInfo in localStorage for Google login
             window.location.href = '/trang-chu';
         })
         .catch(() => {
