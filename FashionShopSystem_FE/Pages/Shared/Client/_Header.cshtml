@@ -108,11 +108,19 @@ document.addEventListener('DOMContentLoaded', async function() {
                 } else {
                     console.warn('Token validation failed. Status:', response.status);
                     console.warn('Response:', await response.text());
+                    // Clear invalid token and cached data
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userInfo');
+                    localStorage.removeItem('userInfoTimestamp');
                     return; // Exit if API call fails
                 }
             } catch (error) {
                 console.error('Error fetching user info:', error);
                 console.error('API endpoint might not exist or network error');
+                // Clear token on network/API errors
+                localStorage.removeItem('token');
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('userInfoTimestamp');
                 return; // Exit if API call fails
             }
         }
