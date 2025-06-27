@@ -32,9 +32,13 @@
     <div class="offcanvas-menu-overlay"></div>
     <div class="offcanvas-menu-wrapper">
         <div class="offcanvas__option">
-            <div class="offcanvas__links">
-                <a href="#">Sign in</a>
-                <a href="#">FAQs</a>
+            <div class="offcanvas__links" id="mobileAuthLinks">
+                <a href="/dang-nhap" id="mobileLoginLink">Đăng nhập</a>
+                <a href="/dang-ky" id="mobileRegisterLink">Đăng ký</a>
+                <div id="mobileUserMenu" style="display: none;">
+                    <a href="/ho-so" id="mobileUserName" style="margin-right: 15px; color: #ca1515; font-weight: 600; text-decoration: none;">Loading...</a>
+                    <a href="javascript:void(0);" onclick="logout()" style="color: #666;">Đăng xuất</a>
+                </div>
             </div>
             <div class="offcanvas__top__hover">
                 <span>Usd <i class="arrow_carrot-down"></i></span>

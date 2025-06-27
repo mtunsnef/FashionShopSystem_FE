@@ -9,9 +9,14 @@
                 </div>
                 <div class="col-lg-6 col-md-5">
                     <div class="header__top__right">
-                        <div class="header__top__links">
-                            <a href="#">Đăng nhập</a>
-                            <a href="#">Đăng ký</a>
+                        <div class="header__top__links" id="authLinks">
+                            <a href="/dang-nhap" id="loginLink">Đăng nhập</a>
+                            <a href="/dang-ky" id="registerLink">Đăng ký</a>
+                            <div id="userMenu" style="display: none;">
+                                <a href="/ho-so" id="userName" style="margin-right: 15px; color: #fff; font-weight: 600; text-decoration: none;">Loading...</a>
+                                <span style="color: #ccc; margin-right: 15px;">|</span>
+                                <a href="javascript:void(0);" onclick="logout()" style="color: #f0f0f0; text-decoration: none;">Đăng xuất</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -37,6 +42,8 @@
                                 <li><a href="/chi-tiet-cua-hang">Chi tiết cửa hàng</a></li>
                                 <li><a href="/gio-hang">Giỏ hàng</a></li>
                                 <li><a href="/checkout">Check Out</a></li>
+                                <li><a href="/dang-nhap">Đăng nhập</a></li>
+                                <li><a href="/dang-ky">Đăng ký</a></li>
                             </ul>
                         </li>
                         <li><a href="/lien-he">Liên hệ</a></li>
@@ -55,3 +62,120 @@
         <div class="canvas__open"><i class="fa fa-bars"></i></div>
     </div>
 </header>
+
+<script>
+// Check for authentication token on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    const token = localStorage.getItem('token');
+    
+    if (token) {
+        // Check if we have cached user info
+        const cachedUserInfo = localStorage.getItem('userInfo');
+        const cacheTimestamp = localStorage.getItem('userInfoTimestamp');
+        const cacheExpiry = 15 * 60 * 1000; // 15 minutes in milliseconds
+        
+        let userData = null;
+        
+        // Use cached data if it exists and hasn't expired
+        if (cachedUserInfo && cacheTimestamp) {
+            const now = new Date().getTime();
+            const cacheAge = now - parseInt(cacheTimestamp);
+            
+            if (cacheAge < cacheExpiry) {
+                userData = JSON.parse(cachedUserInfo);
+                console.log('Using cached user info');
+            }
+        }
+        
+        // If no valid cached data, fetch from API
+        if (!userData) {
+            try {
+                console.log('Fetching fresh user info from API');
+                const response = await fetch('https://localhost:7242/api/User/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    userData = await response.json();
+                    
+                    // Cache the user data
+                    localStorage.setItem('userInfo', JSON.stringify(userData));
+                    localStorage.setItem('userInfoTimestamp', new Date().getTime().toString());
+                } else {
+                    console.warn('Token validation failed. Status:', response.status);
+                    console.warn('Response:', await response.text());
+                    // Clear invalid token and cached data
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userInfo');
+                    localStorage.removeItem('userInfoTimestamp');
+                    return; // Exit if API call fails
+                }
+            } catch (error) {
+                console.error('Error fetching user info:', error);
+                console.error('API endpoint might not exist or network error');
+                // Clear token on network/API errors
+                localStorage.removeItem('token');
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('userInfoTimestamp');
+                return; // Exit if API call fails
+            }
+        }
+        
+        // If we have user data (either cached or fresh), update the UI
+        if (userData) {
+            // Show user menu and hide login/register links
+            document.getElementById('loginLink').style.display = 'none';
+            document.getElementById('registerLink').style.display = 'none';
+            document.getElementById('userMenu').style.display = 'inline-block';
+            
+            // Also update mobile menu
+            const mobileLoginLink = document.getElementById('mobileLoginLink');
+            const mobileRegisterLink = document.getElementById('mobileRegisterLink');
+            const mobileUserMenu = document.getElementById('mobileUserMenu');
+            const mobileUserName = document.getElementById('mobileUserName');
+            
+            if (mobileLoginLink) mobileLoginLink.style.display = 'none';
+            if (mobileRegisterLink) mobileRegisterLink.style.display = 'none';
+            if (mobileUserMenu) mobileUserMenu.style.display = 'block';
+            
+            // Display user full name
+            const userName = userData.fullName || userData.email || 'User';
+            console.log('Setting user name to:', `Xin chào, ${userName}`);
+            console.log('User data:', userData);
+            
+            const userNameElement = document.getElementById('userName');
+            if (userNameElement) {
+                userNameElement.textContent = `Xin chào, ${userName}`;
+                console.log('userName element updated successfully');
+            } else {
+                console.error('userName element not found!');
+            }
+            
+            if (mobileUserName) mobileUserName.textContent = `Xin chào, ${userName}`;
+        }
+    }
+});
+
+// Logout function
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('userInfoTimestamp');
+    window.location.href = '/trang-chu';
+}
+</script>
+
+<style>
+#userMenu a:hover {
+    color: #ca1515 !important;
+    transition: color 0.3s ease;
+}
+
+#userMenu {
+    white-space: nowrap;
+}
+</style>

@@ -1,0 +1,827 @@
+﻿@page "/ho-so"
+@model FashionShopSystem_FE.Pages.Client.ProfileModel
+@{
+    ViewData["Title"] = "Hồ sơ của tôi";
+    Layout = "~/Pages/Shared/Client/_LayoutClient.cshtml";
+}
+
+<!-- Breadcrumb Section Begin -->
+<section class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__text">
+                    <h4>Hồ sơ của tôi</h4>
+                    <div class="breadcrumb__links">
+                        <a href="/trang-chu">Trang chủ</a>
+                        <span>Hồ sơ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Breadcrumb Section End -->
+
+<!-- Profile Section Begin -->
+<section class="profile spad">
+    <div class="container">
+        <div class="row">
+            <!-- Profile Sidebar -->
+            <div class="col-lg-3 col-md-4">
+                <div class="profile__sidebar">
+                    <div class="profile__sidebar__avatar">
+                        <h5 id="sidebarUserName">Loading...</h5>
+                        <p id="sidebarUserRole">Customer</p>
+                    </div>
+                    <div class="profile__sidebar__menu">
+                        <ul>
+                            <li class="active" onclick="showSection('profile')">
+                                <i class="fa fa-user"></i>
+                                <span>Thông tin cá nhân</span>
+                            </li>
+                            <li onclick="showSection('change-password')">
+                                <i class="fa fa-lock"></i>
+                                <span>Đổi mật khẩu</span>
+                            </li>
+                            <li onclick="redirectToOrderHistory()">
+                                <i class="fa fa-list-alt"></i>
+                                <span>Lịch sử đơn hàng</span>
+                            </li>
+                            <li onclick="logout()">
+                                <i class="fa fa-sign-out"></i>
+                                <span>Đăng xuất</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="col-lg-9 col-md-8">
+                <!-- Profile Information Section -->
+                <div id="profile-section" class="profile__content">
+                    <div class="profile__content__header">
+                        <h3>Thông tin cá nhân</h3>
+                        <button type="button" class="btn btn-edit" onclick="toggleEditMode()">
+                            <i class="fa fa-edit"></i> Chỉnh sửa
+                        </button>
+                    </div>
+
+                    <!-- Display Mode -->
+                    <div id="display-mode" class="profile__form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form__item">
+                                    <label>Họ và tên</label>
+                                    <div class="form__value" id="displayFullName">Loading...</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form__item">
+                                    <label>Email</label>
+                                    <div class="form__value" id="displayEmail">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form__item">
+                                    <label>Số điện thoại</label>
+                                    <div class="form__value" id="displayPhone">Chưa cập nhật</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form__item">
+                                    <label>Vai trò</label>
+                                    <div class="form__value" id="displayRole">Customer</div>
+                                </div>
+                            </div>
+                        </div>
+                                                <div class="row">
+                            <div class="col-md-6">
+                                <div class="form__item">
+                                    <label>Ngày tạo tài khoản</label>
+                                    <div class="form__value" id="displayCreatedAt">Loading...</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Empty column for layout balance -->
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form__item">
+                                    <label>Địa chỉ</label>
+                                    <div class="form__value" id="displayAddress">Chưa cập nhật</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edit Mode -->
+                    <div id="edit-mode" class="profile__form" style="display: none;">
+                        <div id="editSuccessMessage" class="alert alert-success" style="display: none;">
+                            <i class="fa fa-check"></i> Cập nhật thông tin thành công!
+                        </div>
+                        <div id="editErrorMessage" class="alert alert-danger" style="display: none;"></div>
+                        
+                        <form id="editProfileForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="input__item">
+                                        <input type="text" id="editFullName" placeholder="Họ và tên" required>
+                                        <span class="icon_profile"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="input__item">
+                                        <input type="email" id="editEmail" placeholder="Email" readonly>
+                                        <span class="icon_mail"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="input__item">
+                                        <input type="tel" id="editPhone" placeholder="Số điện thoại">
+                                        <span class="icon_phone"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <!-- Role is read-only -->
+                                    <div class="input__item">
+                                        <input type="text" id="editRole" placeholder="Vai trò" readonly>
+                                        <span class="icon_tags"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="input__item">
+                                        <textarea id="editAddress" placeholder="Địa chỉ" rows="3"></textarea>
+                                        <span class="icon_house_alt"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form__buttons">
+                                <button type="submit" class="site-btn" id="saveProfileBtn">
+                                    <span class="btn-text">Lưu thay đổi</span>
+                                    <span class="btn-loading" style="display: none;">
+                                        <i class="fa fa-spinner fa-spin"></i> Đang lưu...
+                                    </span>
+                                </button>
+                                <button type="button" class="btn btn-cancel" onclick="cancelEdit()">Hủy</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Change Password Section -->
+                <div id="change-password-section" class="profile__content" style="display: none;">
+                    <div class="profile__content__header">
+                        <h3>Đổi mật khẩu</h3>
+                    </div>
+
+                    <div class="profile__form">
+                        <div id="passwordSuccessMessage" class="alert alert-success" style="display: none;">
+                            <i class="fa fa-check"></i> Đổi mật khẩu thành công!
+                        </div>
+                        <div id="passwordErrorMessage" class="alert alert-danger" style="display: none;"></div>
+
+                        <form id="changePasswordForm">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="input__item">
+                                        <input type="password" id="currentPassword" placeholder="Mật khẩu hiện tại" required>
+                                        <span class="icon_lock"></span>
+                                    </div>
+                                    <div class="input__item">
+                                        <input type="password" id="newPassword" placeholder="Mật khẩu mới" required>
+                                        <span class="icon_lock_alt"></span>
+                                    </div>
+                                    <div class="input__item">
+                                        <input type="password" id="confirmPassword" placeholder="Xác nhận mật khẩu mới" required>
+                                        <span class="icon_lock_alt"></span>
+                                    </div>
+                                    <button type="submit" class="site-btn" id="changePasswordBtn">
+                                        <span class="btn-text">Đổi mật khẩu</span>
+                                        <span class="btn-loading" style="display: none;">
+                                            <i class="fa fa-spinner fa-spin"></i> Đang xử lý...
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Profile Section End -->
+
+<script>
+let userData = null;
+let isEditMode = false;
+
+// Load user data on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadUserData();
+    
+    // Handle hash navigation for change password
+    if (window.location.hash === '#change-password') {
+        showSection('change-password');
+    }
+});
+
+// Load user data from localStorage or API
+async function loadUserData() {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        window.location.href = '/dang-nhap';
+        return;
+    }
+
+    try {
+        // Try to get cached user info first
+        const cachedUserInfo = localStorage.getItem('userInfo');
+        if (cachedUserInfo) {
+            userData = JSON.parse(cachedUserInfo);
+            updateUI();
+        }
+
+        // Also fetch fresh data from API
+        const response = await fetch('https://localhost:7242/api/User/me', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            userData = await response.json();
+            localStorage.setItem('userInfo', JSON.stringify(userData));
+            updateUI();
+        } else {
+            console.error('Failed to fetch user data');
+            // Use cached data if API fails
+            if (!userData) {
+                window.location.href = '/dang-nhap';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        // Use cached data if available
+        if (!userData) {
+            window.location.href = '/dang-nhap';
+        }
+    }
+}
+
+// Update UI with user data
+function updateUI() {
+    if (!userData) return;
+
+    // Update sidebar
+    document.getElementById('sidebarUserName').textContent = userData.fullName || 'User';
+    document.getElementById('sidebarUserRole').textContent = userData.role || 'Customer';
+
+    // Update display mode
+    document.getElementById('displayFullName').textContent = userData.fullName || 'Chưa cập nhật';
+    document.getElementById('displayEmail').textContent = userData.email || 'Chưa cập nhật';
+    document.getElementById('displayPhone').textContent = userData.phoneNumber || 'Chưa cập nhật';
+    document.getElementById('displayAddress').textContent = userData.address || 'Chưa cập nhật';
+    document.getElementById('displayRole').textContent = userData.role || 'Customer';
+    
+    // Format and display created date
+    if (userData.createdAt) {
+        const createdDate = new Date(userData.createdAt);
+        document.getElementById('displayCreatedAt').textContent = createdDate.toLocaleDateString('vi-VN');
+    }
+
+    // Status display removed
+
+    // Update edit form
+    document.getElementById('editFullName').value = userData.fullName || '';
+    document.getElementById('editEmail').value = userData.email || '';
+    document.getElementById('editPhone').value = userData.phoneNumber || '';
+    document.getElementById('editAddress').value = userData.address || '';
+    document.getElementById('editRole').value = userData.role || '';
+}
+
+// Show different sections
+function showSection(section) {
+    // Remove active class from all menu items
+    document.querySelectorAll('.profile__sidebar__menu li').forEach(li => {
+        li.classList.remove('active');
+    });
+
+    // Hide all sections
+    document.getElementById('profile-section').style.display = 'none';
+    document.getElementById('change-password-section').style.display = 'none';
+
+    // Show selected section and mark menu item as active
+    if (section === 'profile') {
+        document.getElementById('profile-section').style.display = 'block';
+        document.querySelectorAll('.profile__sidebar__menu li')[0].classList.add('active');
+    } else if (section === 'change-password') {
+        document.getElementById('change-password-section').style.display = 'block';
+        document.querySelectorAll('.profile__sidebar__menu li')[1].classList.add('active');
+    }
+
+    // Exit edit mode when switching sections
+    if (isEditMode) {
+        cancelEdit();
+    }
+}
+
+// Toggle edit mode
+function toggleEditMode() {
+    isEditMode = true;
+    document.getElementById('display-mode').style.display = 'none';
+    document.getElementById('edit-mode').style.display = 'block';
+    hideMessages();
+}
+
+// Cancel edit mode
+function cancelEdit() {
+    isEditMode = false;
+    document.getElementById('display-mode').style.display = 'block';
+    document.getElementById('edit-mode').style.display = 'none';
+    hideMessages();
+    
+    // Reset form values
+    if (userData) {
+        document.getElementById('editFullName').value = userData.fullName || '';
+        document.getElementById('editEmail').value = userData.email || '';
+        document.getElementById('editPhone').value = userData.phoneNumber || '';
+        document.getElementById('editAddress').value = userData.address || '';
+    }
+}
+
+// Handle profile update - remove email from update since it's readonly
+document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/dang-nhap';
+        return;
+    }
+
+    // Show loading state
+    showLoadingState('saveProfileBtn', true);
+    hideMessages();
+
+    const formData = {
+        fullName: document.getElementById('editFullName').value,
+        phoneNumber: document.getElementById('editPhone').value || null,
+        address: document.getElementById('editAddress').value || null
+    };
+
+    try {
+        const response = await fetch('https://localhost:7242/api/User/me', {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+            // Refetch user data to get the latest info and update header
+            await loadUserData();
+            
+            // Show success message
+            showMessage('editSuccessMessage', 'Cập nhật thông tin thành công!');
+            
+            // Exit edit mode immediately
+            cancelEdit();
+        } else {
+            const error = await response.text();
+            showMessage('editErrorMessage', 'Có lỗi xảy ra: ' + error);
+        }
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        showMessage('editErrorMessage', 'Có lỗi xảy ra khi cập nhật thông tin');
+    } finally {
+        // Hide loading state
+        showLoadingState('saveProfileBtn', false);
+    }
+});
+
+// Handle password change
+document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+        showMessage('passwordErrorMessage', 'Mật khẩu xác nhận không khớp');
+        return;
+    }
+
+    // Validate password length
+    if (newPassword.length < 6) {
+        showMessage('passwordErrorMessage', 'Mật khẩu mới phải có ít nhất 6 ký tự');
+        return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/dang-nhap';
+        return;
+    }
+
+    // Show loading state
+    showLoadingState('changePasswordBtn', true);
+    hideMessages();
+
+    try {
+        const response = await fetch('https://localhost:7242/api/user/me/change-password', {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                currentPassword: currentPassword,
+                newPassword: newPassword
+            })
+        });
+
+        if (response.ok) {
+            showMessage('passwordSuccessMessage', 'Đổi mật khẩu thành công!');
+            
+            // Clear form
+            document.getElementById('changePasswordForm').reset();
+        } else {
+            const error = await response.text();
+            showMessage('passwordErrorMessage', 'Có lỗi xảy ra: ' + error);
+        }
+    } catch (error) {
+        console.error('Error changing password:', error);
+        showMessage('passwordErrorMessage', 'Có lỗi xảy ra khi đổi mật khẩu');
+    } finally {
+        // Hide loading state
+        showLoadingState('changePasswordBtn', false);
+    }
+});
+
+// Utility functions
+function showLoadingState(buttonId, isLoading) {
+    const button = document.getElementById(buttonId);
+    const btnText = button.querySelector('.btn-text');
+    const btnLoading = button.querySelector('.btn-loading');
+    
+    if (isLoading) {
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'inline';
+        button.disabled = true;
+        button.style.opacity = '0.7';
+    } else {
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+        button.disabled = false;
+        button.style.opacity = '1';
+    }
+}
+
+function showMessage(elementId, message) {
+    hideMessages();
+    const element = document.getElementById(elementId);
+    element.textContent = message;
+    element.style.display = 'block';
+    
+    // Auto hide after 5 seconds
+    setTimeout(() => {
+        element.style.display = 'none';
+    }, 5000);
+}
+
+function hideMessages() {
+    document.getElementById('editSuccessMessage').style.display = 'none';
+    document.getElementById('editErrorMessage').style.display = 'none';
+    document.getElementById('passwordSuccessMessage').style.display = 'none';
+    document.getElementById('passwordErrorMessage').style.display = 'none';
+}
+
+function redirectToOrderHistory() {
+    // Redirect to order history page
+    window.location.href = '/don-hang';
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('userInfoTimestamp');
+    window.location.href = '/trang-chu';
+}
+</script>
+
+<style>
+.profile {
+    padding: 80px 0;
+}
+
+.profile__sidebar {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    padding: 30px 20px;
+    margin-bottom: 30px;
+}
+
+.profile__sidebar__avatar {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.profile__sidebar__avatar h5 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+}
+
+.profile__sidebar__avatar p {
+    margin: 5px 0 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.profile__sidebar__menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.profile__sidebar__menu li {
+    padding: 15px 20px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.profile__sidebar__menu li:hover,
+.profile__sidebar__menu li.active {
+    background: #ca1515;
+    color: #fff;
+}
+
+.profile__sidebar__menu li i {
+    margin-right: 12px;
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.profile__content {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+}
+
+.profile__content__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.profile__content__header h3 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+}
+
+.btn-edit {
+    background: #ca1515;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.btn-edit:hover {
+    background: #a91212;
+    color: #fff;
+}
+
+.form__item {
+    margin-bottom: 25px;
+}
+
+.form__item label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.form__value {
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border: 1px solid #e1e1e1;
+    border-radius: 5px;
+    color: #666;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.input__item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input__item input,
+.input__item textarea {
+    width: 100%;
+    height: 50px;
+    border: 1px solid #e1e1e1;
+    font-size: 16px;
+    color: #666;
+    padding-left: 45px;
+    border-radius: 5px;
+    background: #fff;
+}
+
+.input__item textarea {
+    height: auto;
+    padding: 15px 15px 15px 45px;
+    resize: vertical;
+}
+
+.input__item input:focus,
+.input__item textarea:focus {
+    border-color: #ca1515;
+    outline: none;
+}
+
+.input__item input[readonly] {
+    background: #f8f9fa;
+    color: #999;
+}
+
+.input__item span {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 18px;
+}
+
+.input__item textarea + span {
+    top: 25px;
+    transform: none;
+}
+
+.site-btn {
+    display: inline-block;
+    height: 50px;
+    background: #ca1515;
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 0 30px;
+    transition: all 0.3s;
+    margin-right: 15px;
+    position: relative;
+}
+
+.site-btn:hover {
+    background: #a91212;
+}
+
+.site-btn:disabled {
+    cursor: not-allowed;
+    background: #ca1515;
+}
+
+.btn-loading {
+    display: none;
+}
+
+.btn-loading i {
+    margin-right: 8px;
+}
+
+.btn-cancel {
+    display: inline-block;
+    height: 50px;
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 0 30px;
+    transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+}
+
+.form__buttons {
+    margin-top: 30px;
+}
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.alert i {
+    margin-right: 10px;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+/* Responsive */
+@@media (max-width: 767px) {
+    .profile__sidebar {
+        margin-bottom: 20px;
+    }
+    
+    .profile__content {
+        padding: 20px;
+    }
+    
+    .profile__content__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .form__buttons {
+        text-align: center;
+    }
+    
+    .site-btn, .btn-cancel {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+}
+</style>

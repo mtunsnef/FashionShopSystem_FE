@@ -1,0 +1,277 @@
+@page "/dang-ky"
+@model FashionShopSystem_FE.Pages.Client.RegisterModel
+@{
+    ViewData["Title"] = "Đăng ký";
+    Layout = "~/Pages/Shared/Client/_LayoutClient.cshtml";
+}
+
+<!-- Breadcrumb Section Begin -->
+<section class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__text">
+                    <h4>Đăng ký</h4>
+                    <div class="breadcrumb__links">
+                        <a href="/trang-chu">Trang chủ</a>
+                        <span>Đăng ký</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Breadcrumb Section End -->
+
+<!-- Register Section Begin -->
+<section class="register spad">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 offset-lg-3">
+                <div class="register__form">
+                    <h3>Đăng ký tài khoản</h3>
+                    
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["ErrorMessage"]
+                        </div>
+                    }
+                    
+                    <form id="registerForm" onsubmit="registerWithEmail(event)">
+                        <div class="input__item">
+                            <input type="text" placeholder="Họ và tên" id="fullNameInput" required>
+                            <span class="icon_profile"></span>
+                            <div id="fullNameError" class="text-danger" style="display: none;"></div>
+                        </div>
+                        <div class="input__item">
+                            <input type="email" placeholder="Địa chỉ email" id="emailInput" required>
+                            <span class="icon_mail"></span>
+                            <div id="emailError" class="text-danger" style="display: none;"></div>
+                        </div>
+                        <div class="input__item">
+                            <input type="password" placeholder="Mật khẩu" id="passwordInput" required>
+                            <span class="icon_lock"></span>
+                            <div id="passwordError" class="text-danger" style="display: none;"></div>
+                        </div>
+                        <div class="input__item">
+                            <input type="password" placeholder="Xác nhận mật khẩu" id="confirmPasswordInput" required>
+                            <span class="icon_lock"></span>
+                            <div id="confirmPasswordError" class="text-danger" style="display: none;"></div>
+                        </div>
+                        <button type="submit" class="site-btn" id="registerBtn">Đăng ký</button>
+                    </form>
+                    
+                    <div class="register__login">
+                        Đã có tài khoản? <a href="/dang-nhap">Đăng nhập ngay</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Register Section End -->
+
+<script>
+async function registerWithEmail(event) {
+    event.preventDefault();
+    
+    const fullName = document.getElementById('fullNameInput').value;
+    const email = document.getElementById('emailInput').value;
+    const password = document.getElementById('passwordInput').value;
+    const confirmPassword = document.getElementById('confirmPasswordInput').value;
+    const registerBtn = document.getElementById('registerBtn');
+    const errorDiv = document.querySelector('.alert-danger');
+    
+    // Clear previous errors
+    document.getElementById('fullNameError').style.display = 'none';
+    document.getElementById('emailError').style.display = 'none';
+    document.getElementById('passwordError').style.display = 'none';
+    document.getElementById('confirmPasswordError').style.display = 'none';
+    if (errorDiv) errorDiv.style.display = 'none';
+    
+    // Basic validation
+    if (!fullName || !email || !password || !confirmPassword) {
+        showError('Vui lòng nhập đầy đủ thông tin');
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        showError('Mật khẩu xác nhận không khớp');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showError('Mật khẩu phải có ít nhất 6 ký tự');
+        return;
+    }
+    
+    // Disable button and show loading
+    registerBtn.disabled = true;
+    registerBtn.textContent = 'Đang đăng ký...';
+    
+    try {
+        const response = await fetch('https://localhost:7242/api/Authenticate/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                FullName: fullName,
+                Email: email,
+                Password: password
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Save token to localStorage if returned
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+            
+            // Save other user info if available
+            if (data.user) {
+                localStorage.setItem('userInfo', JSON.stringify(data.user));
+            }
+            
+            // Redirect to home page
+            window.location.href = '/trang-chu';
+        } else {
+            const errorData = await response.json();
+            const errorMessage = errorData.message || 'Đã xảy ra lỗi khi đăng ký';
+            showError(errorMessage);
+        }
+    } catch (error) {
+        console.error('Register error:', error);
+        showError('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+    } finally {
+        // Re-enable button
+        registerBtn.disabled = false;
+        registerBtn.textContent = 'Đăng ký';
+    }
+}
+
+function showError(message) {
+    let errorDiv = document.querySelector('.alert-danger');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger';
+        document.querySelector('.register__form h3').insertAdjacentElement('afterend', errorDiv);
+    }
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+</script>
+
+<style>
+.register {
+    padding: 80px 0;
+}
+
+.register__form {
+    background: #fff;
+    padding: 50px 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+}
+
+.register__form h3 {
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 35px;
+    text-align: center;
+}
+
+.input__item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input__item input {
+    width: 100%;
+    height: 50px;
+    border: 1px solid #e1e1e1;
+    font-size: 16px;
+    color: #666;
+    padding-left: 45px;
+    border-radius: 5px;
+}
+
+.input__item input:focus {
+    border-color: #ca1515;
+    outline: none;
+}
+
+.input__item span {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 18px;
+}
+
+.site-btn {
+    display: block;
+    width: 100%;
+    height: 50px;
+    background: #ca1515;
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.3s;
+}
+
+.site-btn:hover {
+    background: #a91212;
+}
+
+.site-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.register__login {
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+}
+
+.register__login a {
+    color: #ca1515;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.register__login a:hover {
+    text-decoration: underline;
+}
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.text-danger {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+</style> 
