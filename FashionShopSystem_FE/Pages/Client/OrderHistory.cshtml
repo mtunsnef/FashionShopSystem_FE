@@ -1,0 +1,903 @@
+@page "/don-hang"
+@model FashionShopSystem_FE.Pages.Client.OrderHistoryModel
+@{
+    ViewData["Title"] = "Lịch sử đơn hàng";
+    Layout = "~/Pages/Shared/Client/_LayoutClient.cshtml";
+}
+
+<!-- Breadcrumb Section Begin -->
+<section class="breadcrumb-option">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb__text">
+                    <h4>Lịch sử đơn hàng</h4>
+                    <div class="breadcrumb__links">
+                        <a href="/trang-chu">Trang chủ</a>
+                        <span>Lịch sử đơn hàng</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Breadcrumb Section End -->
+
+<!-- Order History Section Begin -->
+<section class="profile spad">
+    <div class="container">
+        <div class="row">
+            <!-- Profile Sidebar -->
+            <div class="col-lg-3 col-md-4">
+                <div class="profile__sidebar">
+                    <div class="profile__sidebar__avatar">
+                        <h5 id="sidebarUserName">Loading...</h5>
+                        <p id="sidebarUserRole">Customer</p>
+                    </div>
+                    <div class="profile__sidebar__menu">
+                        <ul>
+                            <li onclick="redirectToProfile()">
+                                <i class="fa fa-user"></i>
+                                <span>Thông tin cá nhân</span>
+                            </li>
+                            <li onclick="redirectToProfile('change-password')">
+                                <i class="fa fa-lock"></i>
+                                <span>Đổi mật khẩu</span>
+                            </li>
+                            <li class="active">
+                                <i class="fa fa-list-alt"></i>
+                                <span>Lịch sử đơn hàng</span>
+                            </li>
+                            <li onclick="logout()">
+                                <i class="fa fa-sign-out"></i>
+                                <span>Đăng xuất</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order History Content -->
+            <div class="col-lg-9 col-md-8">
+                <div class="profile__content">
+                    <div class="profile__content__header">
+                        <h3>Lịch sử đơn hàng</h3>
+                        <div class="order__filters">
+                            <select id="statusFilter" onchange="filterOrders()">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="Processing">Đang xử lý</option>
+                                <option value="Shipped">Đang giao</option>
+                                <option value="Delivered">Đã giao</option>
+                                <option value="Cancelled">Đã hủy</option>
+                            </select>
+                            <select id="dateFilter" onchange="filterOrders()">
+                                <option value="">Tất cả thời gian</option>
+                                <option value="today">Hôm nay</option>
+                                <option value="week">7 ngày qua</option>
+                                <option value="month">30 ngày qua</option>
+                                <option value="3months">3 tháng qua</option>
+                                <option value="year">1 năm qua</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="ordersLoading" class="loading-state" style="display: none;">
+                        <div class="loading-spinner">
+                            <i class="fa fa-spinner fa-spin"></i>
+                            <p>Đang tải đơn hàng...</p>
+                        </div>
+                    </div>
+
+                    <!-- Orders Container -->
+                    <div id="ordersContainer">
+                        <!-- Orders will be loaded here -->
+                    </div>
+
+                    <!-- Pagination -->
+                    <div id="paginationContainer" class="pagination-container" style="display: none;">
+                        <div class="pagination-info">
+                            <span id="paginationInfo">Hiển thị 1-10 của 25 đơn hàng</span>
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="prevPageBtn" onclick="changePage(-1)" disabled>
+                                <i class="fa fa-chevron-left"></i> Trước
+                            </button>
+                            <span id="pageNumbers"></span>
+                            <button id="nextPageBtn" onclick="changePage(1)">
+                                Tiếp <i class="fa fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="emptyState" class="empty-state" style="display: none;">
+                        <div class="empty-icon">
+                            <i class="fa fa-shopping-bag"></i>
+                        </div>
+                        <h4>Chưa có đơn hàng nào</h4>
+                        <p>Bạn chưa có đơn hàng nào. Hãy bắt đầu mua sắm!</p>
+                        <a href="/cua-hang" class="site-btn">Mua sắm ngay</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Order History Section End -->
+
+<script>
+let userData = null;
+let currentPage = 1;
+let pageSize = 10;
+let totalCount = 0;
+let currentFilter = '';
+
+// Load user data and orders on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadUserData();
+    // Use mock data for now to show UI
+    loadMockOrders();
+    // await loadOrders(); // Uncomment this and remove loadMockOrders() when API is ready
+});
+
+// Load user data for sidebar
+async function loadUserData() {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        window.location.href = '/dang-nhap';
+        return;
+    }
+
+    try {
+        const cachedUserInfo = localStorage.getItem('userInfo');
+        if (cachedUserInfo) {
+            userData = JSON.parse(cachedUserInfo);
+            updateSidebar();
+        }
+
+        const response = await fetch('https://localhost:7242/api/User/me', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            userData = await response.json();
+            localStorage.setItem('userInfo', JSON.stringify(userData));
+            updateSidebar();
+        } else if (!userData) {
+            window.location.href = '/dang-nhap';
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        if (!userData) {
+            window.location.href = '/dang-nhap';
+        }
+    }
+}
+
+// Update sidebar with user info
+function updateSidebar() {
+    if (!userData) return;
+    document.getElementById('sidebarUserName').textContent = userData.fullName || 'User';
+    document.getElementById('sidebarUserRole').textContent = userData.role || 'Customer';
+}
+
+// Load mock orders for UI testing
+function loadMockOrders() {
+    mockData = {
+                 "@@odata.count": 25,
+        "value": [
+            {
+                "orderId": 1001,
+                "userId": 4,
+                "userName": "Hoang Cong Minh",
+                "userEmail": "congminh23092004@gmail.com",
+                "orderDate": "2024-01-15T14:30:25.123Z",
+                "totalAmount": 159.97,
+                "paymentStatus": "Paid",
+                "deliveryStatus": "Shipped",
+                "shippingAddress": "123 Fashion Street, Style City, SC 12345",
+                "email": "congminh23092004@gmail.com",
+                "orderDetails": [
+                    {
+                        "orderDetailId": 2001,
+                        "productId": 15,
+                        "productName": "Classic Denim Jacket",
+                        "productDescription": "Vintage-style denim jacket with distressed finish",
+                        "productImageUrl": "/img/product/product-1.jpg",
+                        "quantity": 1,
+                        "price": 89.99,
+                        "subtotal": 89.99
+                    },
+                    {
+                        "orderDetailId": 2002,
+                        "productId": 23,
+                        "productName": "Cotton T-Shirt White",
+                        "productDescription": "100% organic cotton comfortable t-shirt",
+                        "productImageUrl": "/img/product/product-2.jpg",
+                        "quantity": 2,
+                        "price": 24.99,
+                        "subtotal": 49.98
+                    },
+                    {
+                        "orderDetailId": 2003,
+                        "productId": 7,
+                        "productName": "Leather Sneakers",
+                        "productDescription": "Premium leather casual sneakers",
+                        "productImageUrl": "/img/product/product-3.jpg",
+                        "quantity": 1,
+                        "price": 20.00,
+                        "subtotal": 20.00
+                    }
+                ]
+            },
+            {
+                "orderId": 1005,
+                "userId": 4,
+                "userName": "Hoang Cong Minh",
+                "userEmail": "congminh23092004@gmail.com",
+                "orderDate": "2024-01-10T09:15:42.456Z",
+                "totalAmount": 45.98,
+                "paymentStatus": "Paid",
+                "deliveryStatus": "Delivered",
+                "shippingAddress": "123 Fashion Street, Style City, SC 12345",
+                "email": "congminh23092004@gmail.com",
+                "orderDetails": [
+                    {
+                        "orderDetailId": 2010,
+                        "productId": 31,
+                        "productName": "Summer Dress Blue",
+                        "productDescription": "Light and breezy summer dress in navy blue",
+                        "productImageUrl": "/img/product/product-4.jpg",
+                        "quantity": 1,
+                        "price": 45.98,
+                        "subtotal": 45.98
+                    }
+                ]
+            },
+            {
+                "orderId": 1008,
+                "userId": 4,
+                "userName": "Hoang Cong Minh",
+                "userEmail": "congminh23092004@gmail.com",
+                "orderDate": "2024-01-08T16:45:18.789Z",
+                "totalAmount": 129.95,
+                "paymentStatus": "Pending",
+                "deliveryStatus": "Processing",
+                "shippingAddress": "123 Fashion Street, Style City, SC 12345",
+                "email": "congminh23092004@gmail.com",
+                "orderDetails": [
+                    {
+                        "orderDetailId": 2020,
+                        "productId": 12,
+                        "productName": "Winter Coat Black",
+                        "productDescription": "Warm winter coat with hood and inner lining",
+                        "productImageUrl": "/img/product/product-5.jpg",
+                        "quantity": 1,
+                        "price": 129.95,
+                        "subtotal": 129.95
+                    }
+                ]
+            }
+        ],
+                 "@@odata.nextLink": "https://localhost:7242/api/Order/my-orders?$skip=10"
+    };
+
+         totalCount = mockData['@@odata.count'];
+     renderOrders(mockData.value);
+     setupPagination(1, mockData['@@odata.nextLink']);
+     showEmptyState(false);
+}
+
+// Load orders with pagination
+async function loadOrders(page = 1, filter = '') {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        window.location.href = '/dang-nhap';
+        return;
+    }
+
+    showLoading(true);
+    
+    try {
+        const skip = (page - 1) * pageSize;
+        let url = `https://localhost:7242/api/order/my-orders?$top=${pageSize}&$skip=${skip}&$count=true&$orderby=orderDate desc`;
+        
+        if (filter) {
+            url += `&$filter=deliveryStatus eq '${filter}'`;
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+                         totalCount = data['@@odata.count'];
+            
+            if (data.value && data.value.length > 0) {
+                renderOrders(data.value);
+                                 setupPagination(page, data['@@odata.nextLink']);
+                showEmptyState(false);
+            } else {
+                showEmptyState(true);
+            }
+        } else {
+            console.error('Failed to load orders');
+            showEmptyState(true);
+        }
+    } catch (error) {
+        console.error('Error loading orders:', error);
+        showEmptyState(true);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Render orders (simplified design)
+function renderOrders(orders) {
+    const container = document.getElementById('ordersContainer');
+    container.innerHTML = orders.map(order => `
+        <div class="order-card">
+            <div class="order-header">
+                <div class="order-info">
+                    <h4>Đơn hàng #${order.orderId}</h4>
+                    <p class="order-date">${formatDate(order.orderDate)}</p>
+                </div>
+                <div class="order-status">
+                    <span class="delivery-status ${order.deliveryStatus.toLowerCase()}">${translateDeliveryStatus(order.deliveryStatus)}</span>
+                    <span class="order-total">$${order.totalAmount}</span>
+                </div>
+            </div>
+            
+            <div class="order-summary">
+                <div class="order-items">
+                    <span class="item-count">${order.orderDetails.length} sản phẩm</span>
+                    <div class="product-names">
+                        ${order.orderDetails.slice(0, 2).map(detail => detail.productName).join(', ')}
+                        ${order.orderDetails.length > 2 ? `... và ${order.orderDetails.length - 2} sản phẩm khác` : ''}
+                    </div>
+                </div>
+                <div class="order-actions">
+                    <button class="btn-view-details" onclick="viewOrderDetails(${order.orderId})">
+                        Xem chi tiết
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Setup pagination
+function setupPagination(currentPageNum, nextLink) {
+    currentPage = currentPageNum;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    
+    if (totalCount > 0) {
+        document.getElementById('paginationContainer').style.display = 'block';
+        
+        // Update pagination info
+        const start = (currentPage - 1) * pageSize + 1;
+        const end = Math.min(currentPage * pageSize, totalCount);
+        document.getElementById('paginationInfo').textContent = `Hiển thị ${start}-${end} của ${totalCount} đơn hàng`;
+        
+        // Update buttons
+        document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+        document.getElementById('nextPageBtn').disabled = !nextLink;
+        
+        // Generate page numbers
+        generatePageNumbers(totalPages);
+    } else {
+        document.getElementById('paginationContainer').style.display = 'none';
+    }
+}
+
+// Generate page numbers
+function generatePageNumbers(totalPages) {
+    const pageNumbers = document.getElementById('pageNumbers');
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    let html = '';
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="page-number ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    
+    pageNumbers.innerHTML = html;
+}
+
+// Navigation functions
+function changePage(direction) {
+    const newPage = currentPage + direction;
+    if (newPage >= 1) {
+        loadOrders(newPage, currentFilter);
+    }
+}
+
+function goToPage(page) {
+    if (page !== currentPage) {
+        loadOrders(page, currentFilter);
+    }
+}
+
+function filterOrders() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    currentPage = 1;
+    // For now, just filter by status with mock data
+    // When using real API, you'll need to modify loadOrders to handle date filtering
+    let filteredMockData = JSON.parse(JSON.stringify(mockData)); // Deep copy
+    
+    if (statusFilter) {
+        filteredMockData.value = filteredMockData.value.filter(order => 
+            order.deliveryStatus === statusFilter
+        );
+    }
+    
+    if (dateFilter) {
+        const now = new Date();
+        let dateThreshold = new Date();
+        
+        switch(dateFilter) {
+            case 'today':
+                dateThreshold.setHours(0, 0, 0, 0);
+                break;
+            case 'week':
+                dateThreshold.setDate(now.getDate() - 7);
+                break;
+            case 'month':
+                dateThreshold.setDate(now.getDate() - 30);
+                break;
+            case '3months':
+                dateThreshold.setMonth(now.getMonth() - 3);
+                break;
+            case 'year':
+                dateThreshold.setFullYear(now.getFullYear() - 1);
+                break;
+        }
+        
+        filteredMockData.value = filteredMockData.value.filter(order => 
+            new Date(order.orderDate) >= dateThreshold
+        );
+    }
+    
+    filteredMockData['@@odata.count'] = filteredMockData.value.length;
+    
+    if (filteredMockData.value.length > 0) {
+        renderOrders(filteredMockData.value);
+        setupPagination(1, null); // No next link for filtered results
+        showEmptyState(false);
+    } else {
+        showEmptyState(true);
+    }
+}
+
+// Store original mock data for filtering
+let mockData = null;
+
+// Utility functions
+function showLoading(show) {
+    document.getElementById('ordersLoading').style.display = show ? 'block' : 'none';
+    document.getElementById('ordersContainer').style.display = show ? 'none' : 'block';
+}
+
+function showEmptyState(show) {
+    document.getElementById('emptyState').style.display = show ? 'block' : 'none';
+    document.getElementById('ordersContainer').style.display = show ? 'none' : 'block';
+    document.getElementById('paginationContainer').style.display = 'none';
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function translatePaymentStatus(status) {
+    const translations = {
+        'Paid': 'Đã thanh toán',
+        'Pending': 'Chờ thanh toán',
+        'Failed': 'Thanh toán thất bại',
+        'Refunded': 'Đã hoàn tiền'
+    };
+    return translations[status] || status;
+}
+
+function translateDeliveryStatus(status) {
+    const translations = {
+        'Processing': 'Đang xử lý',
+        'Shipped': 'Đang giao',
+        'Delivered': 'Đã giao',
+        'Cancelled': 'Đã hủy'
+    };
+    return translations[status] || status;
+}
+
+function viewOrderDetails(orderId) {
+    window.location.href = `/don-hang/${orderId}`;
+}
+
+function redirectToProfile(section = 'profile') {
+    if (section === 'change-password') {
+        window.location.href = '/ho-so#change-password';
+    } else {
+        window.location.href = '/ho-so';
+    }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('userInfoTimestamp');
+    window.location.href = '/trang-chu';
+}
+</script>
+
+<style>
+.profile {
+    padding: 80px 0;
+}
+
+.profile__sidebar {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    padding: 30px 20px;
+    margin-bottom: 30px;
+}
+
+.profile__sidebar__avatar {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.profile__sidebar__avatar h5 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+}
+
+.profile__sidebar__avatar p {
+    margin: 5px 0 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.profile__sidebar__menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.profile__sidebar__menu li {
+    padding: 15px 20px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.profile__sidebar__menu li:hover,
+.profile__sidebar__menu li.active {
+    background: #ca1515;
+    color: #fff;
+}
+
+.profile__sidebar__menu li i {
+    margin-right: 12px;
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.profile__content {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+}
+
+.profile__content__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.profile__content__header h3 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+}
+
+.order__filters {
+    display: flex;
+    gap: 15px;
+}
+
+.order__filters select {
+    padding: 8px 15px;
+    border: 1px solid #e1e1e1;
+    border-radius: 5px;
+    background: #fff;
+    color: #666;
+    font-size: 14px;
+    min-width: 150px;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.loading-spinner i {
+    font-size: 24px;
+    color: #ca1515;
+    margin-bottom: 15px;
+}
+
+.loading-spinner p {
+    color: #666;
+    margin: 0;
+}
+
+.order-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid #e1e1e1;
+    transition: box-shadow 0.3s;
+}
+
+.order-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.order-info h4 {
+    margin: 0 0 5px 0;
+    color: #333;
+    font-weight: 600;
+}
+
+.order-date {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.order-status {
+    display: flex;
+    gap: 10px;
+}
+
+.payment-status, .delivery-status {
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.payment-status.paid { background: #d4edda; color: #155724; }
+.payment-status.pending { background: #fff3cd; color: #856404; }
+.payment-status.failed { background: #f8d7da; color: #721c24; }
+
+.delivery-status.processing { background: #cce5ff; color: #004085; }
+.delivery-status.shipped { background: #fff3cd; color: #856404; }
+.delivery-status.delivered { background: #d4edda; color: #155724; }
+.delivery-status.cancelled { background: #f8d7da; color: #721c24; }
+
+.order-total {
+    font-weight: 600;
+    font-size: 18px;
+    color: #ca1515;
+    margin-left: 10px;
+}
+
+.order-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+    border-top: 1px solid #e1e1e1;
+}
+
+.order-items {
+    flex: 1;
+}
+
+.item-count {
+    font-weight: 600;
+    color: #666;
+    margin-right: 10px;
+}
+
+.product-names {
+    color: #999;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.btn-view-details {
+    padding: 8px 20px;
+    background: #ca1515;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.btn-view-details:hover {
+    background: #a91212;
+}
+
+/* Removed old detailed product styles - now using simplified design */
+
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e1e1e1;
+}
+
+.pagination-info {
+    color: #666;
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pagination-controls button {
+    padding: 8px 15px;
+    border: 1px solid #e1e1e1;
+    background: #fff;
+    color: #333;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+    background: #ca1515;
+    color: #fff;
+    border-color: #ca1515;
+}
+
+.pagination-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-number.active {
+    background: #ca1515;
+    color: #fff;
+    border-color: #ca1515;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-icon i {
+    font-size: 60px;
+    color: #ddd;
+    margin-bottom: 20px;
+}
+
+.empty-state h4 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.site-btn {
+    display: inline-block;
+    padding: 12px 30px;
+    background: #ca1515;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+}
+
+.site-btn:hover {
+    background: #a91212;
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Responsive */
+@@media (max-width: 767px) {
+    .profile__sidebar {
+        margin-bottom: 20px;
+    }
+    
+    .profile__content {
+        padding: 20px;
+    }
+    
+    .profile__content__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .order-summary {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .product-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .product-price {
+        text-align: center;
+    }
+    
+    .pagination-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+</style> 
