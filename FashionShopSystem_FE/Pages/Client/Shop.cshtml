@@ -6,6 +6,8 @@
     var currentCategoryId = Request.Query["categoryid"].ToString();
     var sort = Request.Query["sort"].ToString();
     var Currentbrand = Request.Query["brand"].ToString();
+    var curentprice = Request.Query["price"].ToString();
+
 }
 
 <section class="breadcrumb-option">
@@ -142,13 +144,48 @@
                                     <div class="card-body">
                                         <div class="shop__sidebar__price">
                                             <ul>
-                                                <li><a href="#">$0.00 - $50.00</a></li>
-                                                <li><a href="#">$50.00 - $100.00</a></li>
-                                                <li><a href="#">$100.00 - $150.00</a></li>
-                                                <li><a href="#">$150.00 - $200.00</a></li>
-                                                <li><a href="#">$200.00 - $250.00</a></li>
-                                                <li><a href="#">250.00+</a></li>
+                                                @{
+                                                    var baseParams = new List<string>();
+                                                    if (!string.IsNullOrEmpty(currentKeyword))
+                                                        baseParams.Add($"keyword={Uri.EscapeDataString(currentKeyword)}");
+                                                    if (!string.IsNullOrEmpty(currentCategoryId))
+                                                        baseParams.Add($"categoryid={currentCategoryId}");
+                                                    if (!string.IsNullOrEmpty(Currentbrand))
+                                                        baseParams.Add($"brand={Uri.EscapeDataString(Currentbrand)}");
+
+                                                     allUrl = baseParams.Count == 0
+                                                    ? "/cua-hang"
+                                                    : "/cua-hang?" + string.Join("&", baseParams);
+                                                }
+
+                                                <!-- Dòng TẤT CẢ -->
+                                                <li class="@(string.IsNullOrEmpty(curentprice) ? "active-category" : "")">
+                                                    <a href="@allUrl">Tất cả</a>
+                                                </li>
+
+                                                <!-- Các mức giá -->
+                                                @for (int i = 1; i <= 6; i++)
+                                                {
+                                                    var priceParams = new List<string>(baseParams) { $"price={i}" };
+                                                    var priceUrl = "/cua-hang?" + string.Join("&", priceParams);
+
+                                                    string priceText = i switch
+                                                    {
+                                                        1 => "0đ - 50.000đ",
+                                                        2 => "50.000đ - 200.000đ",
+                                                        3 => "200.000đ - 300.000đ",
+                                                        4 => "300.000đ - 400.000đ",
+                                                        5 => "400.000đ - 500.000đ",
+                                                        6 => "500.000đ+",
+                                                        _ => ""
+                                                    };
+
+                                                    <li class="@(curentprice == i.ToString() ? "active-category" : "")">
+                                                        <a href="@priceUrl">@priceText</a>
+                                                    </li>
+                                                }
                                             </ul>
+
                                         </div>
                                     </div>
                                 </div>
@@ -266,26 +303,27 @@
                         </div>
                         <div class="col-lg-6 col-md-6 col-sm-6">
                             <div class="shop__product__option__right">
-                            <p>Sắp Xếp theo giá :</p>
-                            <form method="get" id="sortForm">
-                                <input type="hidden" name="categoryid" value="@Request.Query["categoryid"]" />
-                                <input type="hidden" name="keyword" value="@Request.Query["keyword"]" />
-                                <select name="sort" onchange="document.getElementById('sortForm').submit()">
-                                    <option value="">Mặc định</option>
+                                <p>Sắp Xếp theo giá :</p>
+                                <form method="get" id="sortForm">
+                                    <input type="hidden" name="categoryid" value="@Request.Query["categoryid"]" />
+                                    <input type="hidden" name="keyword" value="@Request.Query["keyword"]" />
+                                    <select name="sort" onchange="document.getElementById('sortForm').submit()">
+                                        <option value="">Mặc định</option>
                                         <option value="asc" selected="@(Request.Query["sort"] == "asc" ? "selected" : null)">Thấp Đến Cao</option>
                                         <option value="desc" selected="@(Request.Query["sort"] == "desc" ? "selected" : null)">Cao Đến Thấp</option>
-                                </select>
-                            </form>
-                        </div>
+                                    </select>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="row">
-                    @if (Model.Products != null && Model.Products.Any()){
-                    @foreach (var product in Model.Products)
+                    @if (Model.Products != null && Model.Products.Any())
                     {
-                        <div class="col-lg-4 col-md-6 col-sm-6">
-                            <div class="product__item">
+                        @foreach (var product in Model.Products)
+                        {
+                            <div class="col-lg-4 col-md-6 col-sm-6">
+                                <div class="product__item">
                                     <div class="product__item__pic set-bg" data-setbg="https://localhost:7242@(product.ImageUrl)">
                                         <ul class="product__hover">
                                             <li><a href="#"><img src="img/icon/heart.png" alt="Yêu thích"></a></li>
@@ -294,7 +332,7 @@
                                         </ul>
                                     </div>
 
-                                <div class="product__item__text">
+                                    <div class="product__item__text">
                                         <div class="rating">
                                             <i class="fa fa-star-o"></i>
                                             <i class="fa fa-star-o"></i>
@@ -302,15 +340,16 @@
                                             <i class="fa fa-star-o"></i>
                                             <i class="fa fa-star-o"></i>
                                         </div>
-                                    <h6>@product.ProductName</h6>
-                                    <a href="#" class="add-cart">+ Add To Cart</a>
-                                    
-                                    <h5>$@product.Price</h5>
-                                     
+                                        <h6>@product.ProductName</h6>
+                                        <a href="#" class="add-cart">+ Add To Cart</a>
+
+                                        <h5>$@product.Price</h5>
+
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        }}
+                        }
+}
                     else
                     {
                         <p>Không có sản phẩm nào.</p>
@@ -337,7 +376,11 @@
         font-weight: bold;
         color: black !important;
     }
-    .color-black text{
+
+    .color-black text {
         color: black !important;
     }
+
+    
+
 </style>
