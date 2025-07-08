@@ -1,4 +1,4 @@
-﻿using FashionShopSystem_FE.DTO;
+using FashionShopSystem_FE.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Json;
