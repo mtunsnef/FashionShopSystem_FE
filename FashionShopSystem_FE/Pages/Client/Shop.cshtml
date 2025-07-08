@@ -213,26 +213,27 @@
                         </div>
                         <div class="col-lg-6 col-md-6 col-sm-6">
                             <div class="shop__product__option__right">
-                            <p>Sắp Xếp theo giá :</p>
-                            <form method="get" id="sortForm">
-                                <input type="hidden" name="categoryid" value="@Request.Query["categoryid"]" />
-                                <input type="hidden" name="keyword" value="@Request.Query["keyword"]" />
-                                <select name="sort" onchange="document.getElementById('sortForm').submit()">
-                                    <option value="">Mặc định</option>
+                                <p>Sắp Xếp theo giá :</p>
+                                <form method="get" id="sortForm">
+                                    <input type="hidden" name="categoryid" value="@Request.Query["categoryid"]" />
+                                    <input type="hidden" name="keyword" value="@Request.Query["keyword"]" />
+                                    <select name="sort" onchange="document.getElementById('sortForm').submit()">
+                                        <option value="">Mặc định</option>
                                         <option value="asc" selected="@(Request.Query["sort"] == "asc" ? "selected" : null)">Thấp Đến Cao</option>
                                         <option value="desc" selected="@(Request.Query["sort"] == "desc" ? "selected" : null)">Cao Đến Thấp</option>
-                                </select>
-                            </form>
-                        </div>
+                                    </select>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="row">
-                    @if (Model.Products != null && Model.Products.Any()){
-                    @foreach (var product in Model.Products)
+                    @if (Model.Products != null && Model.Products.Any())
                     {
-                        <div class="col-lg-4 col-md-6 col-sm-6">
-                            <div class="product__item">
+                        @foreach (var product in Model.Products)
+                        {
+                            <div class="col-lg-4 col-md-6 col-sm-6">
+                                <div class="product__item">
                                     <div class="product__item__pic set-bg" data-setbg="https://localhost:7242@(product.ImageUrl)">
                                         <ul class="product__hover">
                                             <li><a href="#"><img src="img/icon/heart.png" alt="Yêu thích"></a></li>
@@ -241,7 +242,7 @@
                                         </ul>
                                     </div>
 
-                                <div class="product__item__text">
+                                    <div class="product__item__text">
                                         <div class="rating">
                                             <i class="fa fa-star-o"></i>
                                             <i class="fa fa-star-o"></i>
@@ -249,15 +250,16 @@
                                             <i class="fa fa-star-o"></i>
                                             <i class="fa fa-star-o"></i>
                                         </div>
-                                    <h6>@product.ProductName</h6>
-                                    <a href="#" class="add-cart">+ Add To Cart</a>
-                                    
-                                    <h5>$@product.Price</h5>
-                                     
+                                        <h6>@product.ProductName</h6>
+                                        <a href="#" class="add-cart">+ Add To Cart</a>
+
+                                        <h5>$@product.Price</h5>
+
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        }}
+                        }
+}
                     else
                     {
                         <p>Không có sản phẩm nào.</p>
@@ -284,7 +286,8 @@
         font-weight: bold;
         color: black !important;
     }
-    .color-black text{
+
+    .color-black text {
         color: black !important;
     }
 </style>
