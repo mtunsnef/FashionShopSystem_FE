@@ -13,13 +13,14 @@ namespace FashionShopSystem_FE.Pages.Client
         public List<ProductResponseDto> Products { get; set; } = new();
 
         public List<CategoryResponseDto> Categories { get; set; } = new();
+        public List<string> brands { get; set; } = new();
 
         public ShopModel(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task OnGetAsync(int? categoryid, string? keyword, string? sort)
+        public async Task OnGetAsync(int? categoryid, string? keyword, string? sort,string? brand)
         {
             var client = _httpClientFactory.CreateClient();
 
@@ -31,10 +32,11 @@ namespace FashionShopSystem_FE.Pages.Client
                 queryParams.Add($"keyword={Uri.EscapeDataString(keyword)}");
             if (!string.IsNullOrWhiteSpace(sort))
                 queryParams.Add($"sort={Uri.EscapeDataString(sort)}");
+            if (!string.IsNullOrWhiteSpace(brand))
+                queryParams.Add($"brand={Uri.EscapeDataString(brand)}");
 
             var query = queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
             var productUrl = $"https://localhost:7242/api/Product/Product{query}";
-
             try
             {
                 var response = await client.GetAsync(productUrl);
@@ -49,14 +51,14 @@ namespace FashionShopSystem_FE.Pages.Client
                     ModelState.AddModelError(string.Empty, "Không thể tải sản phẩm. Vui lòng thử lại sau.");
                 }
 
-                var categoryResponse = await client.GetAsync("https://localhost:7242/api/Category/Category");
-                if (categoryResponse.IsSuccessStatusCode)
-                {
-                    var categories = await categoryResponse.Content.ReadFromJsonAsync<List<CategoryResponseDto>>();
-                    if (categories != null)
-                        Categories = categories;
-                }
-                else
+            var categoryResponse = await client.GetAsync("https://localhost:7242/api/Category/Category");
+            if (categoryResponse.IsSuccessStatusCode)
+            {
+                var categories = await categoryResponse.Content.ReadFromJsonAsync<List<CategoryResponseDto>>();
+                if (categories != null)
+                Categories = categories;
+            }
+            else
                 {
                     ModelState.AddModelError(string.Empty, "Không thể tải danh mục. Vui lòng thử lại sau.");
                 }
@@ -64,6 +66,17 @@ namespace FashionShopSystem_FE.Pages.Client
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi: " + ex.Message);
+            }
+            var brandResponse = await client.GetAsync("https://localhost:7242/api/Product/Brand");
+            if (brandResponse.IsSuccessStatusCode)
+            {
+                var brandlist = await brandResponse.Content.ReadFromJsonAsync<List<string>>();
+                if (brandlist != null)
+                    brands = brandlist;
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Không thể tải thương hiệu. Vui lòng thử lại sau.");
             }
         }
     }
