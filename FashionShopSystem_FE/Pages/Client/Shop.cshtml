@@ -341,8 +341,11 @@
                                             <i class="fa fa-star-o"></i>
                                         </div>
                                         <h6>@product.ProductName</h6>
-                                        <a href="#" class="add-cart">+ Add To Cart</a>
-
+                                        <a href="#" class="add-cart" 
+                                            data-product-id="@product.ProductId" 
+                                            data-product-name="@product.ProductName" 
+                                            data-unit-price="@product.Price" 
+                                            data-product-image="@product.ImageUrl"> + Thêm vào giỏ hàng </a>
                                         <h5>$@product.Price</h5>
 
                                     </div>
@@ -370,7 +373,7 @@
         </div>
     </div>
 </section>
-
+<script src="~/js/shopping-cart/add-cart.js"></script>
 <style>
     .active-category a {
         font-weight: bold;
@@ -380,7 +383,4 @@
     .color-black text {
         color: black !important;
     }
-
-    
-
 </style>

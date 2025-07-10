@@ -139,7 +139,11 @@
                                     <input type="text" value="1">
                                 </div>
                             </div>
-                            <a href="#" class="primary-btn">add to cart</a>
+                            <a href="#" class="primary-btn add-cart"
+                               data-product-id="@Model.product.ProductId"
+                               data-product-name="@Model.product.ProductName"
+                               data-unit-price="@Model.product.Price"
+                               data-product-image="@Model.product.ImageUrl"> + Thêm vào giỏ hàng </a>
                         </div>
                         <div class="product__details__btns__option">
                             <a href="#"><i class="fa fa-heart"></i> add to wishlist</a>
@@ -426,3 +430,4 @@
         </div>
     </div>
 </section>
+<script src="~/js/shopping-cart/add-cart.js"></script>
