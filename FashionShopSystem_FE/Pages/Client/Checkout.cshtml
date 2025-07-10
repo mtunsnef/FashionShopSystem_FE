@@ -24,7 +24,7 @@
 
                         <div class="checkout__input">
                             <p>Email<span>*</span></p>
-                            <input type="email" id="email" required placeholder="VD: nguyenvana123@gmail.com" />
+                            <input type="email" id="email" disabled required placeholder="VD: nguyenvana123@gmail.com" />
                             <div id="emailError" class="text-danger small"></div>
                         </div>
 
@@ -57,4 +57,23 @@
         </div>
     </div>
 </section>
+<div id="confirmOrderModal" class="custom-modal-overlay">
+    <div class="custom-modal">
+        <div class="custom-modal__header">
+            <h4>Xác nhận đặt hàng</h4>
+            <button class="custom-modal__close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="custom-modal__body">
+            <p>Bạn có chắc chắn muốn đặt hàng không?</p>
+        </div>
+        <div class="custom-modal__footer">
+            <button class="site-btn gray-btn" onclick="closeModal()">Không</button>
+            <button class="site-btn" id="confirmOrderBtn">Đồng ý</button>
+        </div>
+    </div>
+</div>
+<div id="preloder" style="display: none;">
+    <div class="loader"></div>
+    <div class="preloader-text">Đang chuyển hướng đến trang thanh toán...</div>
+</div>
 <script src="~/js/checkout/checkout.js"></script>
