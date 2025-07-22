@@ -320,13 +320,17 @@
                 <div class="row">
                     @if (Model.Products != null && Model.Products.Any())
                     {
-                        @foreach (var product in Model.Products)
+                        foreach (var product in Model.Products)
                         {
                             <div class="col-lg-4 col-md-6 col-sm-6">
                                 <div class="product__item">
                                     <div class="product__item__pic set-bg" data-setbg="https://localhost:7242@(product.ImageUrl)">
                                         <ul class="product__hover">
-                                            <li><a href="#"><img src="img/icon/heart.png" alt="Yêu thích"></a></li>
+                                            <li>
+                                                <a href="#" class="btn-favourite" data-productid="@product.ProductId">
+                                                    <img src="img/icon/heart.png" alt="Yêu thích">
+                                                </a>
+                                            </li>
                                             <li><a href="#"><img src="img/icon/compare.png" alt="So sánh"> <span>Compare</span></a></li>
                                             <li><a href="/chi-tiet-cua-hang/@product.ProductId"><img src="img/icon/search.png" alt="Chi tiết"></a></li>
                                         </ul>
@@ -341,18 +345,13 @@
                                             <i class="fa fa-star-o"></i>
                                         </div>
                                         <h6>@product.ProductName</h6>
-                                        <a href="#" class="add-cart" 
-                                            data-product-id="@product.ProductId" 
-                                            data-product-name="@product.ProductName" 
-                                            data-unit-price="@product.Price" 
-                                            data-product-image="@product.ImageUrl"> + Thêm vào giỏ hàng </a>
+                                        <a href="#" class="add-cart">+ Add To Cart</a>
                                         <h5>$@product.Price</h5>
-
                                     </div>
                                 </div>
                             </div>
                         }
-}
+                    }
                     else
                     {
                         <p>Không có sản phẩm nào.</p>
@@ -384,3 +383,30 @@
         color: black !important;
     }
 </style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        const token = localStorage.getItem("token");
+        $(".btn-favourite").click(function (e) {
+            e.preventDefault();
+            var productId = $(this).data("productid");
+
+            $.ajax({
+                url: "https://localhost:7242/api/Favourite",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ productId: productId }),
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                },
+                success: function () {
+                    alert("Thêm yêu thích thành công!");
+                },
+                error: function () {
+                    alert("Có lỗi xảy ra khi thêm yêu thích.");
+                }
+            });
+        });
+    });
+</script>
