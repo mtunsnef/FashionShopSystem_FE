@@ -136,9 +136,7 @@ let currentFilter = '';
 // Load user data and orders on page load
 document.addEventListener('DOMContentLoaded', async function() {
     await loadUserData();
-    // Use mock data for now to show UI
-    loadMockOrders();
-    // await loadOrders(); // Uncomment this and remove loadMockOrders() when API is ready
+    await loadOrders();
 });
 
 // Load user data for sidebar
@@ -187,112 +185,7 @@ function updateSidebar() {
     document.getElementById('sidebarUserRole').textContent = userData.role || 'Customer';
 }
 
-// Load mock orders for UI testing
-function loadMockOrders() {
-    mockData = {
-                 "@@odata.count": 25,
-        "value": [
-            {
-                "orderId": 1001,
-                "userId": 4,
-                "userName": "Hoang Cong Minh",
-                "userEmail": "congminh23092004@gmail.com",
-                "orderDate": "2024-01-15T14:30:25.123Z",
-                "totalAmount": 159.97,
-                "paymentStatus": "Paid",
-                "deliveryStatus": "Shipped",
-                "shippingAddress": "123 Fashion Street, Style City, SC 12345",
-                "email": "congminh23092004@gmail.com",
-                "orderDetails": [
-                    {
-                        "orderDetailId": 2001,
-                        "productId": 15,
-                        "productName": "Classic Denim Jacket",
-                        "productDescription": "Vintage-style denim jacket with distressed finish",
-                        "productImageUrl": "/img/product/product-1.jpg",
-                        "quantity": 1,
-                        "price": 89.99,
-                        "subtotal": 89.99
-                    },
-                    {
-                        "orderDetailId": 2002,
-                        "productId": 23,
-                        "productName": "Cotton T-Shirt White",
-                        "productDescription": "100% organic cotton comfortable t-shirt",
-                        "productImageUrl": "/img/product/product-2.jpg",
-                        "quantity": 2,
-                        "price": 24.99,
-                        "subtotal": 49.98
-                    },
-                    {
-                        "orderDetailId": 2003,
-                        "productId": 7,
-                        "productName": "Leather Sneakers",
-                        "productDescription": "Premium leather casual sneakers",
-                        "productImageUrl": "/img/product/product-3.jpg",
-                        "quantity": 1,
-                        "price": 20.00,
-                        "subtotal": 20.00
-                    }
-                ]
-            },
-            {
-                "orderId": 1005,
-                "userId": 4,
-                "userName": "Hoang Cong Minh",
-                "userEmail": "congminh23092004@gmail.com",
-                "orderDate": "2024-01-10T09:15:42.456Z",
-                "totalAmount": 45.98,
-                "paymentStatus": "Paid",
-                "deliveryStatus": "Delivered",
-                "shippingAddress": "123 Fashion Street, Style City, SC 12345",
-                "email": "congminh23092004@gmail.com",
-                "orderDetails": [
-                    {
-                        "orderDetailId": 2010,
-                        "productId": 31,
-                        "productName": "Summer Dress Blue",
-                        "productDescription": "Light and breezy summer dress in navy blue",
-                        "productImageUrl": "/img/product/product-4.jpg",
-                        "quantity": 1,
-                        "price": 45.98,
-                        "subtotal": 45.98
-                    }
-                ]
-            },
-            {
-                "orderId": 1008,
-                "userId": 4,
-                "userName": "Hoang Cong Minh",
-                "userEmail": "congminh23092004@gmail.com",
-                "orderDate": "2024-01-08T16:45:18.789Z",
-                "totalAmount": 129.95,
-                "paymentStatus": "Pending",
-                "deliveryStatus": "Processing",
-                "shippingAddress": "123 Fashion Street, Style City, SC 12345",
-                "email": "congminh23092004@gmail.com",
-                "orderDetails": [
-                    {
-                        "orderDetailId": 2020,
-                        "productId": 12,
-                        "productName": "Winter Coat Black",
-                        "productDescription": "Warm winter coat with hood and inner lining",
-                        "productImageUrl": "/img/product/product-5.jpg",
-                        "quantity": 1,
-                        "price": 129.95,
-                        "subtotal": 129.95
-                    }
-                ]
-            }
-        ],
-                 "@@odata.nextLink": "https://localhost:7242/api/Order/my-orders?$skip=10"
-    };
 
-         totalCount = mockData['@@odata.count'];
-     renderOrders(mockData.value);
-     setupPagination(1, mockData['@@odata.nextLink']);
-     showEmptyState(false);
-}
 
 // Load orders with pagination
 async function loadOrders(page = 1, filter = '') {
@@ -306,12 +199,7 @@ async function loadOrders(page = 1, filter = '') {
     showLoading(true);
     
     try {
-        const skip = (page - 1) * pageSize;
-        let url = `https://localhost:7242/api/order/my-orders?$top=${pageSize}&$skip=${skip}&$count=true&$orderby=orderDate desc`;
-        
-        if (filter) {
-            url += `&$filter=deliveryStatus eq '${filter}'`;
-        }
+        let url = `https://localhost:7242/api/Order/my-orders`;
 
         const response = await fetch(url, {
             method: 'GET',
@@ -322,12 +210,29 @@ async function loadOrders(page = 1, filter = '') {
         });
 
         if (response.ok) {
-            const data = await response.json();
-                         totalCount = data['@@odata.count'];
+            let orders = await response.json();
             
-            if (data.value && data.value.length > 0) {
-                renderOrders(data.value);
-                                 setupPagination(page, data['@@odata.nextLink']);
+            // Apply client-side filtering
+            if (filter) {
+                orders = orders.filter(order => order.deliveryStatus === filter);
+            }
+            
+            // Apply date filtering if needed
+            const dateFilter = document.getElementById('dateFilter').value;
+            if (dateFilter) {
+                orders = applyDateFilter(orders, dateFilter);
+            }
+            
+            totalCount = orders.length;
+            
+            // Apply client-side pagination
+            const startIndex = (page - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const paginatedOrders = orders.slice(startIndex, endIndex);
+            
+            if (orders.length > 0) {
+                renderOrders(paginatedOrders);
+                setupPagination(page, orders.length);
                 showEmptyState(false);
             } else {
                 showEmptyState(true);
@@ -379,8 +284,9 @@ function renderOrders(orders) {
 }
 
 // Setup pagination
-function setupPagination(currentPageNum, nextLink) {
+function setupPagination(currentPageNum, totalOrderCount) {
     currentPage = currentPageNum;
+    totalCount = totalOrderCount;
     const totalPages = Math.ceil(totalCount / pageSize);
     
     if (totalCount > 0) {
@@ -393,7 +299,7 @@ function setupPagination(currentPageNum, nextLink) {
         
         // Update buttons
         document.getElementById('prevPageBtn').disabled = currentPage <= 1;
-        document.getElementById('nextPageBtn').disabled = !nextLink;
+        document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
         
         // Generate page numbers
         generatePageNumbers(totalPages);
@@ -437,59 +343,42 @@ function goToPage(page) {
 
 function filterOrders() {
     const statusFilter = document.getElementById('statusFilter').value;
-    const dateFilter = document.getElementById('dateFilter').value;
-    
+    currentFilter = statusFilter;
     currentPage = 1;
-    // For now, just filter by status with mock data
-    // When using real API, you'll need to modify loadOrders to handle date filtering
-    let filteredMockData = JSON.parse(JSON.stringify(mockData)); // Deep copy
-    
-    if (statusFilter) {
-        filteredMockData.value = filteredMockData.value.filter(order => 
-            order.deliveryStatus === statusFilter
-        );
-    }
-    
-    if (dateFilter) {
-        const now = new Date();
-        let dateThreshold = new Date();
-        
-        switch(dateFilter) {
-            case 'today':
-                dateThreshold.setHours(0, 0, 0, 0);
-                break;
-            case 'week':
-                dateThreshold.setDate(now.getDate() - 7);
-                break;
-            case 'month':
-                dateThreshold.setDate(now.getDate() - 30);
-                break;
-            case '3months':
-                dateThreshold.setMonth(now.getMonth() - 3);
-                break;
-            case 'year':
-                dateThreshold.setFullYear(now.getFullYear() - 1);
-                break;
-        }
-        
-        filteredMockData.value = filteredMockData.value.filter(order => 
-            new Date(order.orderDate) >= dateThreshold
-        );
-    }
-    
-    filteredMockData['@@odata.count'] = filteredMockData.value.length;
-    
-    if (filteredMockData.value.length > 0) {
-        renderOrders(filteredMockData.value);
-        setupPagination(1, null); // No next link for filtered results
-        showEmptyState(false);
-    } else {
-        showEmptyState(true);
-    }
+    loadOrders(1, statusFilter);
 }
 
-// Store original mock data for filtering
-let mockData = null;
+// Apply date filter to orders
+function applyDateFilter(orders, dateFilter) {
+    if (!dateFilter) return orders;
+    
+    const now = new Date();
+    let dateThreshold = new Date();
+    
+    switch(dateFilter) {
+        case 'today':
+            dateThreshold.setHours(0, 0, 0, 0);
+            break;
+        case 'week':
+            dateThreshold.setDate(now.getDate() - 7);
+            break;
+        case 'month':
+            dateThreshold.setDate(now.getDate() - 30);
+            break;
+        case '3months':
+            dateThreshold.setMonth(now.getMonth() - 3);
+            break;
+        case 'year':
+            dateThreshold.setFullYear(now.getFullYear() - 1);
+            break;
+        default:
+            return orders;
+    }
+    
+    return orders.filter(order => new Date(order.orderDate) >= dateThreshold);
+}
+
+
 
 // Utility functions
 function showLoading(show) {

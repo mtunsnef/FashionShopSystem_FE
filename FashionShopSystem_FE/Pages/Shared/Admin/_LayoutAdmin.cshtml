@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Fashion Shop Admin Panel">
+    <meta name="keywords" content="fashion, admin, management, ecommerce">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>@ViewData["Title"] - Fashion Shop Admin</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Css Styles -->
+    <link rel="stylesheet" href="~/css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="~/css/font-awesome.min.css" type="text/css">
+    <link rel="stylesheet" href="~/css/elegant-icons.css" type="text/css">
+    <link rel="stylesheet" href="~/css/magnific-popup.css" type="text/css">
+    <link rel="stylesheet" href="~/css/nice-select.css" type="text/css">
+    <link rel="stylesheet" href="~/css/owl.carousel.min.css" type="text/css">
+    <link rel="stylesheet" href="~/css/slicknav.min.css" type="text/css">
+    <link rel="stylesheet" href="~/css/style.css" type="text/css">
+</head>
+
+<body>
+    <!-- Page Preloder -->
+    <div id="preloder">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Admin Header Section Begin -->
+    <header class="admin-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-lg-3">
+                    <div class="admin-header__logo">
+                        <a href="/admin"><img src="~/img/logo.png" alt="Admin Logo"></a>
+                        <span>Admin Panel</span>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <nav class="admin-header__menu">
+                        <ul>
+                            <li><a href="/admin" class="menu-link">Dashboard</a></li>
+                            <li><a href="/admin/users" class="menu-link">Users</a></li>
+                            <li><a href="/admin/products" class="menu-link">Products</a></li>
+                            <li><a href="/admin/orders" class="menu-link">Orders</a></li>
+                            <li><a href="/admin/categories" class="menu-link">Categories</a></li>
+                        </ul>
+                    </nav>
+                </div>
+                <div class="col-lg-3">
+                    <div class="admin-header__user">
+                        <div class="d-flex align-items-center justify-content-end">
+                            <span class="admin-welcome-text mr-3">
+                                <i class="fa fa-user mr-2"></i>
+                                Hello, <span id="adminUserName">Admin</span>
+                            </span>
+                            <button type="button" class="btn btn-danger" onclick="logout()">
+                                <i class="fa fa-sign-out mr-2"></i>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Admin Header Section End -->
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+        <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 300px;">
+            <div class="toast-header">
+                <i id="toastIcon" class="fa fa-info-circle mr-2"></i>
+                <strong id="toastTitle" class="mr-auto">Notification</strong>
+                <button type="button" class="close" data-dismiss="toast" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                <!-- Notification message here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        @RenderBody()
+    </main>
+
+    <!-- Admin Footer -->
+    <footer class="admin-footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <p>&copy; 2024 Fashion Shop Admin Panel. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Js Plugins -->
+    <script src="~/js/jquery-3.3.1.min.js"></script>
+    <script src="~/js/bootstrap.min.js"></script>
+    <script src="~/js/jquery.nice-select.min.js"></script>
+    <script src="~/js/jquery.nicescroll.min.js"></script>
+    <script src="~/js/jquery.magnific-popup.min.js"></script>
+    <script src="~/js/jquery.countdown.min.js"></script>
+    <script src="~/js/jquery.slicknav.js"></script>
+    <script src="~/js/mixitup.min.js"></script>
+    <script src="~/js/owl.carousel.min.js"></script>
+    <script src="~/js/main.js"></script>
+
+    <script>
+        // Check if user is admin and logged in
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkAdminAuth();
+            highlightActiveMenu();
+        });
+
+        async function checkAdminAuth() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = '/dang-nhap';
+                return;
+            }
+
+            try {
+                const response = await fetch('https://localhost:7242/api/User/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    
+                    if (userData.role !== 'Admin') {
+                        alert('Access denied. Admin privileges required.');
+                        window.location.href = '/trang-chu';
+                        return;
+                    }
+
+                    document.getElementById('adminUserName').textContent = userData.fullName || 'Admin';
+                } else {
+                    window.location.href = '/dang-nhap';
+                }
+            } catch (error) {
+                console.error('Error checking admin auth:', error);
+                window.location.href = '/dang-nhap';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('userInfoTimestamp');
+            window.location.href = '/trang-chu';
+        }
+
+        function highlightActiveMenu() {
+            const currentPath = window.location.pathname;
+            const menuLinks = document.querySelectorAll('.menu-link');
+            
+            menuLinks.forEach(link => {
+                link.classList.remove('active');
+                const href = link.getAttribute('href');
+                
+                // Check for exact match or parent path match
+                if (href === currentPath || (href !== '/admin' && currentPath.startsWith(href))) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        // Beautiful Notification System
+        function showNotification(message, type = 'info', title = 'Notification') {
+            const toast = document.getElementById('notificationToast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastHeader = toast.querySelector('.toast-header');
+            
+            // Remove existing classes
+            toast.className = 'toast';
+            toastIcon.className = 'fa mr-2';
+            toastHeader.className = 'toast-header';
+            
+            // Set content
+            toastMessage.textContent = message;
+            toastTitle.textContent = title;
+            
+            // Set style based on type
+            switch(type) {
+                case 'success':
+                    toast.classList.add('bg-success', 'text-white');
+                    toastHeader.classList.add('bg-success', 'text-white', 'border-success');
+                    toastIcon.classList.add('fa-check-circle');
+                    toastTitle.textContent = title || 'Success';
+                    break;
+                case 'error':
+                case 'danger':
+                    toast.classList.add('bg-danger', 'text-white');
+                    toastHeader.classList.add('bg-danger', 'text-white', 'border-danger');
+                    toastIcon.classList.add('fa-exclamation-circle');
+                    toastTitle.textContent = title || 'Error';
+                    break;
+                case 'warning':
+                    toast.classList.add('bg-warning', 'text-dark');
+                    toastHeader.classList.add('bg-warning', 'text-dark', 'border-warning');
+                    toastIcon.classList.add('fa-exclamation-triangle');
+                    toastTitle.textContent = title || 'Warning';
+                    break;
+                default: // info
+                    toast.classList.add('bg-info', 'text-white');
+                    toastHeader.classList.add('bg-info', 'text-white', 'border-info');
+                    toastIcon.classList.add('fa-info-circle');
+                    toastTitle.textContent = title || 'Info';
+            }
+            
+            // Show toast using Bootstrap 4 syntax
+            $(toast).toast({
+                delay: 4000,
+                autohide: true
+            }).toast('show');
+        }
+
+        // Convenience functions
+        function showSuccess(message, title) {
+            showNotification(message, 'success', title);
+        }
+
+        function showError(message, title) {
+            showNotification(message, 'error', title);
+        }
+
+        function showWarning(message, title) {
+            showNotification(message, 'warning', title);
+        }
+
+        function showInfo(message, title) {
+            showNotification(message, 'info', title);
+        }
+    </script>
+
+    <style>
+        /* Admin Layout Styles */
+        .admin-header {
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            min-height: 80px;
+        }
+
+        .admin-header .row {
+            height: 100%;
+        }
+
+        .admin-header__logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 100%;
+        }
+
+        .admin-header__logo img {
+            height: 45px;
+            width: auto;
+        }
+
+        .admin-header__logo span {
+            font-weight: 700;
+            color: #ca1515;
+            font-size: 20px;
+            white-space: nowrap;
+        }
+
+        .admin-header__menu {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .admin-header__menu ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .admin-header__menu ul li {
+            position: relative;
+        }
+
+        .admin-header__menu ul li a.menu-link {
+            font-weight: 600;
+            color: #333;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: block;
+            font-size: 15px;
+            white-space: nowrap;
+        }
+
+        .admin-header__menu ul li a.menu-link:hover,
+        .admin-header__menu ul li a.menu-link.active {
+            background: #ca1515;
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(202, 21, 21, 0.2);
+        }
+
+        .admin-header__user {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .admin-welcome-text {
+            color: #333;
+            font-weight: 600;
+            font-size: 15px;
+            white-space: nowrap;
+        }
+
+        .admin-welcome-text i {
+            color: #ca1515;
+        }
+
+        .btn-danger {
+            background: #ca1515;
+            border-color: #ca1515;
+            padding: 10px 20px;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background: #a91212;
+            border-color: #a91212;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(202, 21, 21, 0.3);
+        }
+
+        .btn-danger:focus {
+            box-shadow: 0 0 0 3px rgba(202, 21, 21, 0.2);
+        }
+
+        .admin-main {
+            min-height: calc(100vh - 140px);
+            background: #f8f9fa;
+        }
+
+        .admin-footer {
+            background: #333;
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        .admin-footer p {
+            margin: 0;
+            color: #ccc;
+        }
+
+        /* Mobile Responsive */
+        @@media (max-width: 991px) {
+            .admin-header__menu {
+                margin: 15px 0;
+            }
+
+            .admin-header__menu ul {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .admin-header__logo span {
+                display: none;
+            }
+        }
+
+        @@media (max-width: 767px) {
+            .admin-header {
+                padding: 10px 0;
+            }
+
+            .admin-header__menu ul {
+                gap: 10px;
+            }
+
+            .admin-header__menu ul li a {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html> 
