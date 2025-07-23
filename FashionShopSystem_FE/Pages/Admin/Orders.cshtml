@@ -157,6 +157,12 @@
 <script>
 let allOrders = [];
 
+// VND Currency Formatter
+function formatVND(amount) {
+    if (!amount) return '0 VND';
+    return Math.round(amount).toLocaleString('vi-VN') + ' VND';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadOrders();
     setupFilters();
@@ -202,23 +208,23 @@ function displayOrders(orders) {
     
     tbody.innerHTML = orders.map(order => `
         <tr>
-            <td><strong>#${order.orderID}</strong></td>
-            <td>${order.fullName}</td>
-            <td>${order.email}</td>
-            <td>$${order.totalAmount.toFixed(2)}</td>
-            <td>${new Date(order.orderDate).toLocaleDateString()}</td>
+            <td><strong>#${order.OrderId}</strong></td>
+            <td>${order.FullName}</td>
+            <td>${order.Email}</td>
+            <td>${formatVND(order.TotalAmount)}</td>
+            <td>${new Date(order.OrderDate).toLocaleDateString()}</td>
             <td>
-                <span class="badge ${getPaymentStatusClass(order.paymentStatus)}">${order.paymentStatus}</span>
+                <span class="badge ${getPaymentStatusClass(order.PaymentStatus)}">${order.PaymentStatus}</span>
             </td>
             <td>
-                <span class="badge ${getDeliveryStatusClass(order.deliveryStatus)}">${order.deliveryStatus}</span>
+                <span class="badge ${getDeliveryStatusClass(order.DeliveryStatus)}">${order.DeliveryStatus}</span>
             </td>
             <td>
                 <div class="btn-group" role="group">
-                    <button class="btn btn-primary action-btn" onclick="viewOrderDetails(${order.orderID})" title="View Details">
+                    <button class="btn btn-primary action-btn" onclick="viewOrderDetails(${order.OrderId})" title="View Details">
                         <i class="fa fa-eye"></i>
                     </button>
-                    <button class="btn btn-warning action-btn" onclick="openUpdateStatus(${order.orderID}, '${order.deliveryStatus}', '${order.paymentStatus}')" title="Update Status">
+                    <button class="btn btn-warning action-btn" onclick="openUpdateStatus(${order.OrderId}, '${order.DeliveryStatus}', '${order.PaymentStatus}')" title="Update Status">
                         <i class="fa fa-edit"></i>
                     </button>
                 </div>
@@ -266,12 +272,12 @@ function applyFilters() {
     const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
 
     let filteredOrders = allOrders.filter(order => {
-        const matchesStatus = !statusFilter || order.deliveryStatus === statusFilter;
-        const matchesPayment = !paymentFilter || order.paymentStatus === paymentFilter;
-        const matchesDate = !dateFilter || new Date(order.orderDate).toDateString() === new Date(dateFilter).toDateString();
+        const matchesStatus = !statusFilter || order.DeliveryStatus === statusFilter;
+        const matchesPayment = !paymentFilter || order.PaymentStatus === paymentFilter;
+        const matchesDate = !dateFilter || new Date(order.OrderDate).toDateString() === new Date(dateFilter).toDateString();
         const matchesSearch = !searchFilter || 
-            order.fullName.toLowerCase().includes(searchFilter) ||
-            order.email.toLowerCase().includes(searchFilter);
+            order.FullName.toLowerCase().includes(searchFilter) ||
+            order.Email.toLowerCase().includes(searchFilter);
 
         return matchesStatus && matchesPayment && matchesDate && matchesSearch;
     });
@@ -308,22 +314,22 @@ function displayOrderDetails(order) {
         <div class="row">
             <div class="col-md-6">
                 <h6>Order Information</h6>
-                <p><strong>Order ID:</strong> #${order.orderID}</p>
-                <p><strong>Customer:</strong> ${order.fullName}</p>
-                <p><strong>Email:</strong> ${order.email}</p>
-                <p><strong>Phone:</strong> ${order.phone}</p>
-                <p><strong>Order Date:</strong> ${new Date(order.orderDate).toLocaleString()}</p>
+                <p><strong>Order ID:</strong> #${order.OrderId}</p>
+                <p><strong>Customer:</strong> ${order.FullName}</p>
+                <p><strong>Email:</strong> ${order.Email}</p>
+                <p><strong>Phone:</strong> ${order.Phone}</p>
+                <p><strong>Order Date:</strong> ${new Date(order.OrderDate).toLocaleString()}</p>
             </div>
             <div class="col-md-6">
                 <h6>Shipping & Payment</h6>
-                <p><strong>Shipping Address:</strong> ${order.shippingAddress}</p>
-                <p><strong>Payment Status:</strong> <span class="badge ${getPaymentStatusClass(order.paymentStatus)}">${order.paymentStatus}</span></p>
-                <p><strong>Delivery Status:</strong> <span class="badge ${getDeliveryStatusClass(order.deliveryStatus)}">${order.deliveryStatus}</span></p>
-                <p><strong>Total Amount:</strong> $${order.totalAmount.toFixed(2)}</p>
-                ${order.note ? `<p><strong>Note:</strong> ${order.note}</p>` : ''}
+                <p><strong>Shipping Address:</strong> ${order.ShippingAddress}</p>
+                <p><strong>Payment Status:</strong> <span class="badge ${getPaymentStatusClass(order.PaymentStatus)}">${order.PaymentStatus}</span></p>
+                <p><strong>Delivery Status:</strong> <span class="badge ${getDeliveryStatusClass(order.DeliveryStatus)}">${order.DeliveryStatus}</span></p>
+                <p><strong>Total Amount:</strong> ${formatVND(order.TotalAmount)}</p>
+                ${order.Note ? `<p><strong>Note:</strong> ${order.Note}</p>` : ''}
             </div>
         </div>
-        ${order.orderDetails && order.orderDetails.length > 0 ? `
+        ${order.OrderDetails && order.OrderDetails.length > 0 ? `
         <hr>
         <h6>Order Items</h6>
         <div class="table-responsive">
@@ -337,12 +343,12 @@ function displayOrderDetails(order) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${order.orderDetails.map(item => `
+                    ${order.OrderDetails.map(item => `
                         <tr>
-                            <td>${item.productName || 'Product'}</td>
-                            <td>${item.quantity}</td>
-                            <td>$${item.price.toFixed(2)}</td>
-                            <td>$${(item.quantity * item.price).toFixed(2)}</td>
+                            <td>${item.ProductName || 'Product'}</td>
+                            <td>${item.Quantity}</td>
+                            <td>${formatVND(item.Price)}</td>
+                            <td>${formatVND(item.Subtotal)}</td>
                         </tr>
                     `).join('')}
                 </tbody>

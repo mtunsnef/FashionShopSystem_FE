@@ -121,12 +121,12 @@ else
             </div>
             <div class="modal-body">
                 <form id="productForm">
-                    <input type="hidden" id="productId" value="">
+                    <input type="hidden" id="productId" value="@(Model.EditingProduct?.ProductId ?? 0)">
                     <div class="row">
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="productName" class="form-label">Product Name *</label>
-                                <input type="text" class="form-control" id="productName" required>
+                                <input type="text" class="form-control" id="productName" value="@(Model.EditingProduct?.ProductName ?? "")" required>
                             </div>
                         </div>
                     </div>
@@ -134,7 +134,7 @@ else
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control" id="description" rows="3"></textarea>
+                                <textarea class="form-control" id="description" rows="3">@(Model.EditingProduct?.Description ?? "")</textarea>
                             </div>
                         </div>
                     </div>
@@ -142,13 +142,13 @@ else
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="price" class="form-label">Price *</label>
-                                <input type="number" class="form-control" id="price" step="0.01" required>
+                                <input type="number" class="form-control" id="price" step="1" value="@(Model.EditingProduct?.Price ?? 0)" required>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="stock" class="form-label">Stock *</label>
-                                <input type="number" class="form-control" id="stock" required>
+                                <input type="number" class="form-control" id="stock" value="@(Model.EditingProduct?.Stock ?? 0)" required>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -158,7 +158,14 @@ else
                                     <option value="">Select Category</option>
                                     @foreach (var category in Model.Categories)
                                     {
-                                        <option value="@category.CategoryId">@category.CategoryName</option>
+                                        @if (Model.EditingProduct != null && Model.EditingProduct.CategoryId == category.CategoryId)
+                                        {
+                                            <option value="@category.CategoryId" selected>@category.CategoryName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@category.CategoryId">@category.CategoryName</option>
+                                        }
                                     }
                                 </select>
                             </div>
@@ -168,13 +175,17 @@ else
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="brand" class="form-label">Brand</label>
-                                <input type="text" class="form-control" id="brand">
+                                <input type="text" class="form-control" id="brand" value="@(Model.EditingProduct?.Brand ?? "")">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="imageUrl" class="form-label">Image URL</label>
-                                <input type="text" class="form-control" id="imageUrl">
+                                <label for="imageFile" class="form-label">Product Image</label>
+                                <input type="file" class="form-control" id="imageFile" accept="image/*" onchange="previewImage(this)">
+                                <small class="form-text text-muted">Select an image file (JPG, PNG, GIF, etc.)</small>
+                                <div id="imagePreview" class="mt-2" style="display: none;">
+                                    <img id="previewImg" src="" alt="Image preview" style="max-width: 200px; max-height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -213,6 +224,12 @@ let filteredProducts = [];
 let allBrands = [];
 let editingProductId = null;
 let deleteProductId = null;
+
+// VND Currency Formatter
+function formatVND(amount) {
+    if (!amount) return '0 VND';
+    return Math.round(amount).toLocaleString('vi-VN') + ' VND';
+}
 
 // Load data on page load
 document.addEventListener('DOMContentLoaded', async function() {
@@ -300,25 +317,25 @@ function renderProducts(products) {
     
     tbody.innerHTML = products.map(product => `
         <tr>
-            <td>${product.productId}</td>
+            <td>${product.ProductId}</td>
             <td>
-                <img src="https://localhost:7242${product.imageUrl || '/img/product/default.jpg'}" alt="${product.productName}" 
+                <img src="https://localhost:7242${product.ImageUrl || '/img/product/default.jpg'}" alt="${product.ProductName}" 
                      style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
             </td>
-            <td>${product.productName || 'N/A'}</td>
+            <td>${product.ProductName || 'N/A'}</td>
             <td>${getCategoryName(product.CategoryId)}</td>
-            <td>${product.brand || 'N/A'}</td>
-            <td>$${product.price ? product.price.toFixed(2) : '0.00'}</td>
-            <td>${product.stock || 0}</td>
+            <td>${product.Brand || 'N/A'}</td>
+            <td>${formatVND(product.Price)}</td>
+            <td>${product.Stock || 0}</td>
             <td>
-                <span class="badge ${product.isActive ? 'bg-success' : 'bg-secondary'}">${product.isActive ? 'Active' : 'Inactive'}</span>
+                <span class="badge ${product.IsActive ? 'bg-success' : 'bg-secondary'}">${product.IsActive ? 'Active' : 'Inactive'}</span>
             </td>
             <td>
                 <div class="btn-group" role="group">
-                    <button class="btn btn-outline-primary action-btn" onclick="editProduct(${product.productId})" title="Edit Product">
+                    <button class="btn btn-outline-primary action-btn" onclick="editProduct(${product.ProductId})" title="Edit Product">
                         <i class="fa fa-edit"></i>
                     </button>
-                    <button class="btn btn-outline-danger action-btn" onclick="deleteProduct(${product.productId}, '${product.productName}')" title="Delete Product">
+                    <button class="btn btn-outline-danger action-btn" onclick="deleteProduct(${product.ProductId}, '${product.ProductName}')" title="Delete Product">
                         <i class="fa fa-trash"></i>
                     </button>
                 </div>
@@ -347,14 +364,14 @@ function filterProducts() {
 
     filteredProducts = allProducts.filter(product => {
         const matchesSearch = !searchTerm || 
-            (product.productName && product.productName.toLowerCase().includes(searchTerm)) ||
-            (product.description && product.description.toLowerCase().includes(searchTerm)) ||
-            (product.brand && product.brand.toLowerCase().includes(searchTerm));
+            (product.ProductName && product.ProductName.toLowerCase().includes(searchTerm)) ||
+            (product.Description && product.Description.toLowerCase().includes(searchTerm)) ||
+            (product.Brand && product.Brand.toLowerCase().includes(searchTerm));
 
         const matchesCategory = !categoryFilter || product.CategoryId.toString() === categoryFilter;
-        const matchesBrand = !brandFilter || product.brand === brandFilter;
-        const matchesStatus = !statusFilter || product.isActive.toString() === statusFilter;
-        const matchesPrice = !minPrice || (product.price && product.price >= minPrice);
+        const matchesBrand = !brandFilter || product.Brand === brandFilter;
+        const matchesStatus = !statusFilter || product.IsActive.toString() === statusFilter;
+        const matchesPrice = !minPrice || (product.Price && product.Price >= minPrice);
 
         return matchesSearch && matchesCategory && matchesBrand && matchesStatus && matchesPrice;
     });
@@ -379,42 +396,37 @@ function openCreateProductModal() {
     document.getElementById('productModalLabel').textContent = 'Add New Product';
     document.getElementById('productForm').reset();
     document.getElementById('productId').value = '';
+    
+    // Clear image preview
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('previewImg').src = '';
+    
     $('#productModal').modal('show');
 }
 
-// Edit product
+// Edit product - redirect to same page with productId to use Razor Pages logic
 function editProduct(productId) {
-    const product = allProducts.find(p => p.productId === productId);
-    if (!product) return;
-
-    editingProductId = productId;
-    document.getElementById('productModalLabel').textContent = 'Edit Product';
-    
-    // Populate form fields
-    document.getElementById('productId').value = product.productId;
-    document.getElementById('productName').value = product.productName || '';
-    document.getElementById('description').value = product.description || '';
-    document.getElementById('price').value = product.price || '';
-    document.getElementById('stock').value = product.stock || '';
-    document.getElementById('categoryId').value = product.CategoryId || '';
-    document.getElementById('brand').value = product.brand || '';
-    document.getElementById('imageUrl').value = product.imageUrl || '';
-    
-    $('#productModal').modal('show');
+    window.location.href = `/admin/products?productId=${productId}`;
 }
 
 // Save product (create or update)
 async function saveProduct() {
-    const formData = {
-        productName: document.getElementById('productName').value,
-        description: document.getElementById('description').value,
-        price: parseFloat(document.getElementById('price').value),
-        stock: parseInt(document.getElementById('stock').value),
-        categoryId: parseInt(document.getElementById('categoryId').value),
-        brand: document.getElementById('brand').value,
-        imageUrl: document.getElementById('imageUrl').value,
-        isActive: true
-    };
+    const formData = new FormData();
+    
+    // Add form fields to FormData
+    formData.append('productName', document.getElementById('productName').value);
+    formData.append('description', document.getElementById('description').value);
+    formData.append('price', Math.round(parseFloat(document.getElementById('price').value) || 0));
+    formData.append('stock', document.getElementById('stock').value);
+    formData.append('categoryId', document.getElementById('categoryId').value);
+    formData.append('brand', document.getElementById('brand').value);
+    formData.append('isActive', 'true');
+    
+    // Add image file if selected
+    const imageFile = document.getElementById('imageFile').files[0];
+    if (imageFile) {
+        formData.append('imageUrl', imageFile);
+    }
 
     const token = localStorage.getItem('token');
 
@@ -423,24 +435,24 @@ async function saveProduct() {
         
         if (editingProductId) {
             // Update product
-            formData.productId = editingProductId;
+            formData.append('productId', editingProductId);
             response = await fetch('https://localhost:7242/api/Product/Product', {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${token}`
+                    // Note: Don't set Content-Type for FormData, browser will set it automatically with boundary
                 },
-                body: JSON.stringify(formData)
+                body: formData
             });
         } else {
             // Create product
             response = await fetch('https://localhost:7242/api/Product/Product', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${token}`
+                    // Note: Don't set Content-Type for FormData, browser will set it automatically with boundary
                 },
-                body: JSON.stringify(formData)
+                body: formData
             });
         }
 
@@ -509,6 +521,26 @@ function cancelProductModal() {
 
 function cancelDeleteProductModal() {
     $('#deleteModal').modal('hide');
+}
+
+// Preview image when file is selected
+function previewImage(input) {
+    const previewDiv = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewDiv.style.display = 'block';
+        };
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        previewDiv.style.display = 'none';
+        previewImg.src = '';
+    }
 }
 </script>
 
@@ -754,11 +786,74 @@ function cancelDeleteProductModal() {
         font-size: 14px;
     }
 }
+
+/* File Input and Image Preview Styling */
+#imageFile {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    transition: border-color 0.3s ease;
+}
+
+#imageFile:hover {
+    border-color: #007bff;
+    background-color: #e3f2fd;
+}
+
+#imageFile:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: 0;
+}
+
+#imagePreview {
+    margin-top: 10px;
+}
+
+#previewImg {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+#previewImg:hover {
+    transform: scale(1.02);
+}
 </style>
 
 <script>
 // Load data on page load
 document.addEventListener('DOMContentLoaded', async function() {
     await Promise.all([loadProducts(), loadBrands()]);
+    
+    // Check if we're editing a product (Razor Pages logic)
+    @if (Model.EditingProduct != null)
+    {
+        <text>
+        // Set up for editing
+        editingProductId = @Model.EditingProduct.ProductId;
+        document.getElementById('productModalLabel').textContent = 'Edit Product';
+        
+        // Show current image if available
+        @if (!string.IsNullOrEmpty(Model.EditingProduct.ImageUrl))
+        {
+            <text>
+            document.getElementById('imagePreview').style.display = 'block';
+            document.getElementById('previewImg').src = '@("https://localhost:7242" + Model.EditingProduct.ImageUrl)';
+            </text>
+        }
+        else
+        {
+            <text>
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('previewImg').src = '';
+            </text>
+        }
+        
+        // Show the modal
+        $('#productModal').modal('show');
+        </text>
+    }
 });
 </script> 

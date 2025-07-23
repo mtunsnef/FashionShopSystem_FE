@@ -157,10 +157,19 @@
         }
 
         function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('userInfo');
-            localStorage.removeItem('userInfoTimestamp');
-            window.location.href = '/trang-chu';
+            console.log('🚪 Logout function called');
+            
+            // Show confirmation
+            if (confirm('Are you sure you want to logout?')) {
+                console.log('✅ User confirmed logout');
+                localStorage.removeItem('token');
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('userInfoTimestamp');
+                console.log('🗑️ localStorage cleared');
+                window.location.href = '/trang-chu';
+            } else {
+                console.log('❌ User cancelled logout');
+            }
         }
 
         function highlightActiveMenu() {
